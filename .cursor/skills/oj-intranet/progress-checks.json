@@ -135,21 +135,28 @@
       "gate": "Gate 2",
       "checks": [
         { "id": "2.N", "label": "News module scaffold", "all": [
-          { "type": "file", "path": "app/Modules/News/module.json" }
+          { "type": "file", "path": "app/Modules/News/module.json" },
+          { "type": "class", "name": "App\\Modules\\News\\Models\\Post" },
+          { "type": "route", "name": "news.index" }
         ]},
         { "id": "2.D", "label": "Documents module + storage adapter", "all": [
           { "type": "file", "path": "app/Modules/Documents/module.json" },
-          { "type": "class", "name": "App\\Modules\\Documents\\Contracts\\DocumentStorageAdapter" }
+          { "type": "class", "name": "App\\Modules\\Documents\\Contracts\\DocumentStorageAdapter" },
+          { "type": "class", "name": "App\\Modules\\Documents\\Storage\\LocalStorageDriver" }
         ]},
-        { "id": "2.P", "label": "Policy hub module/views", "any": [
+        { "id": "2.P", "label": "Policy hub module/views", "all": [
           { "type": "file", "path": "app/Modules/Policies/module.json" },
-          { "type": "file_contains", "path": "app/Modules/Documents", "needle": "is_policy" }
+          { "type": "route", "name": "policies.index" },
+          { "type": "class", "name": "App\\Modules\\Documents\\Services\\PolicyService" }
         ]},
         { "id": "2.A", "label": "AudienceResolver", "all": [
           { "type": "class", "name": "App\\Shared\\Services\\AudienceResolver" }
         ]},
         { "id": "2.T", "label": "Phase 2 feature tests", "all": [
-          { "type": "file", "path": "tests/Feature/Phase2NewsDocumentsTest.php" }
+          { "type": "file", "path": "tests/Feature/Phase2NewsDocumentsTest.php" },
+          { "type": "file_contains", "path": "tests/Feature/Phase2NewsDocumentsTest.php", "needle": "UR-NEW-04" },
+          { "type": "file_contains", "path": "tests/Feature/Phase2NewsDocumentsTest.php", "needle": "UR-DOC-03/04/05" },
+          { "type": "file_contains", "path": "tests/Feature/Phase2NewsDocumentsTest.php", "needle": "UR-POL-01/02/06" }
         ]}
       ]
     },

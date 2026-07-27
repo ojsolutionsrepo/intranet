@@ -1,0 +1,6 @@
+{
+  "name": "policies",
+  "label": "Policies",
+  "version": "1.0.0",
+  "description": "Policy hub menu entry (backed by Documents module)"
+}

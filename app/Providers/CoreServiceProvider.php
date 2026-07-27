@@ -25,6 +25,11 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->register(DemoServiceProvider::class);
         $this->app->register(DirectoryServiceProvider::class);
         $this->app->register(AdminServiceProvider::class);
+        $this->app->register(\App\Modules\News\NewsServiceProvider::class);
+        $this->app->register(\App\Modules\Documents\DocumentsServiceProvider::class);
+        $this->app->register(\App\Modules\Documents\PoliciesMenuServiceProvider::class);
+        $this->app->singleton(\App\Shared\Services\AudienceResolver::class);
+        $this->app->singleton(\App\Shared\Services\HtmlSanitizer::class);
     }
 
     public function boot(): void

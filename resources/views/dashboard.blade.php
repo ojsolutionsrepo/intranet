@@ -16,8 +16,13 @@
     <div class="grid gap-4 md:grid-cols-2">
         <div class="card p-5">
             <h3 class="font-display font-semibold text-base mb-2">Getting started</h3>
-            <p class="note">Directory is live — find people by name, department, or expertise.</p>
-            <a href="{{ route('directory.index') }}" class="btn btn-primary btn-sm mt-3">Open directory</a>
+            <p class="note">Directory, news, documents, and the policy hub are live.</p>
+            <div class="flex flex-wrap gap-2 mt-3">
+                <a href="{{ route('directory.index') }}" class="btn btn-primary btn-sm">Directory</a>
+                <a href="{{ route('news.index') }}" class="btn btn-ghost btn-sm">News</a>
+                <a href="{{ route('documents.index') }}" class="btn btn-ghost btn-sm">Documents</a>
+                <a href="{{ route('policies.index') }}" class="btn btn-ghost btn-sm">Policies</a>
+            </div>
         </div>
         <div class="card p-5">
             <h3 class="font-display font-semibold text-base mb-2">Your role</h3>
