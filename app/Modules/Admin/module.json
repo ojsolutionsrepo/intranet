@@ -1,0 +1,6 @@
+{
+  "name": "admin",
+  "label": "Admin",
+  "version": "1.0.0",
+  "description": "User management and permission matrix"
+}

@@ -1,0 +1,6 @@
+{
+  "name": "demo",
+  "label": "Demo Module",
+  "version": "1.0.0",
+  "description": "Gate 0 test module — enable/disable to verify the module system."
+}

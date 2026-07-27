@@ -1,0 +1,10 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+    level: 6
+    ignoreErrors: []
+
+    # Core is held to a higher bar in CI via a second pass (level 8).

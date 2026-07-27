@@ -1,0 +1,213 @@
+{
+  "skill_root": ".cursor/skills/oj-intranet",
+  "skill_file": "SKILL.md",
+  "required_skill_sections": [
+    "Timeline (realistic)",
+    "Non-negotiables",
+    "Stack",
+    "Code standards",
+    "Module layout",
+    "Agent workflow",
+    "Open blockers",
+    "Go-live rule",
+    "Reference files"
+  ],
+  "required_references": [
+    "reference/phases.md",
+    "reference/architecture.md",
+    "reference/design-system.md",
+    "reference/requirements-map.md",
+    "reference/gates.md"
+  ],
+  "phases": [
+    {
+      "id": 0,
+      "name": "Foundation",
+      "gate": "Gate 0",
+      "checks": [
+        { "id": "0.1", "label": "Laravel 11 + Pint/PHPStan/Pest", "all": [
+          { "type": "file", "path": "artisan" },
+          { "type": "file", "path": "vendor/bin/pint" },
+          { "type": "file", "path": "phpstan.neon" },
+          { "type": "file", "path": "tests/Pest.php" }
+        ]},
+        { "id": "0.2", "label": "XAMPP Apache alias/vhost", "any": [
+          { "type": "file", "path": "apache/alias.conf" },
+          { "type": "file", "path": "apache/vhost.conf" }
+        ]},
+        { "id": "0.3", "label": "ModuleRegistry + Demo module toggle", "all": [
+          { "type": "class", "name": "App\\Core\\Modules\\ModuleRegistry" },
+          { "type": "file", "path": "app/Modules/Demo/module.json" },
+          { "type": "test", "path": "tests/Feature/Phase0FoundationTest.php", "contains": "demo" }
+        ]},
+        { "id": "0.4", "label": "Hook action/filter", "all": [
+          { "type": "class", "name": "App\\Core\\Hooks\\Hook" },
+          { "type": "class", "name": "App\\Core\\Hooks\\HookManager" }
+        ]},
+        { "id": "0.5", "label": "Roles Admin/Manager/Staff/Guest", "all": [
+          { "type": "file", "path": "database/seeders/RoleSeeder.php" },
+          { "type": "file_contains", "path": "database/seeders/RoleSeeder.php", "needle": "Admin" }
+        ]},
+        { "id": "0.6", "label": "Fortify auth + idle session", "all": [
+          { "type": "file", "path": "app/Providers/FortifyServiceProvider.php" },
+          { "type": "class", "name": "App\\Http\\Middleware\\EnsureSessionIsActive" },
+          { "type": "file_contains", "path": "app/Models/User.php", "needle": "TwoFactorAuthenticatable" }
+        ]},
+        { "id": "0.7", "label": "DS-001 app shell layout", "all": [
+          { "type": "file", "path": "resources/views/layouts/app.blade.php" },
+          { "type": "file", "path": "public/css/oj.css" }
+        ]},
+        { "id": "0.8", "label": "AuditLogger + Auditable", "all": [
+          { "type": "class", "name": "App\\Shared\\Services\\AuditLogger" },
+          { "type": "class", "name": "App\\Shared\\Support\\Auditable" }
+        ]},
+        { "id": "0.9", "label": "Settings service", "all": [
+          { "type": "class", "name": "App\\Shared\\Services\\Settings" }
+        ]},
+        { "id": "0.10", "label": "CI workflow", "all": [
+          { "type": "file", "path": ".github/workflows/ci.yml" }
+        ]},
+        { "id": "0.11", "label": "Staging HTTPS + RDS snapshot", "manual": true, "note": "Ops/staging — not verified in repo" },
+        { "id": "0.T", "label": "Phase 0 feature tests", "all": [
+          { "type": "file", "path": "tests/Feature/Phase0FoundationTest.php" }
+        ]}
+      ]
+    },
+    {
+      "id": 1,
+      "name": "Identity, RBAC & Directory",
+      "gate": "Gate 1",
+      "checks": [
+        { "id": "1.1", "label": "Departments/teams schema + seeders", "all": [
+          { "type": "file", "path": "database/migrations/2026_07_27_140000_create_directory_tables.php" },
+          { "type": "class", "name": "App\\Shared\\Models\\Department" },
+          { "type": "class", "name": "App\\Shared\\Models\\Team" },
+          { "type": "file", "path": "database/seeders/DirectorySeeder.php" }
+        ]},
+        { "id": "1.2", "label": "CSV/XLSX staff import with preview", "all": [
+          { "type": "class", "name": "App\\Modules\\Directory\\Services\\StaffImportService" },
+          { "type": "class", "name": "App\\Modules\\Directory\\Livewire\\StaffImport" },
+          { "type": "route", "name": "directory.import" }
+        ]},
+        { "id": "1.3", "label": "Profiles + photo service", "all": [
+          { "type": "class", "name": "App\\Shared\\Models\\UserProfile" },
+          { "type": "class", "name": "App\\Modules\\Directory\\Services\\ProfilePhotoService" }
+        ]},
+        { "id": "1.4", "label": "Directory index Livewire filters", "all": [
+          { "type": "class", "name": "App\\Modules\\Directory\\Livewire\\DirectoryIndex" },
+          { "type": "class", "name": "App\\Modules\\Directory\\Services\\DirectorySearch" },
+          { "type": "route", "name": "directory.index" }
+        ]},
+        { "id": "1.5", "label": "Profile detail + reporting line", "all": [
+          { "type": "route", "name": "directory.show" },
+          { "type": "file_contains", "path": "app/Modules/Directory/Resources/views/show.blade.php", "needle": "Reporting line" }
+        ]},
+        { "id": "1.6", "label": "Department detail page", "all": [
+          { "type": "route", "name": "directory.department" }
+        ]},
+        { "id": "1.7", "label": "Org chart (Should)", "all": [
+          { "type": "class", "name": "App\\Modules\\Directory\\Livewire\\OrgChart" },
+          { "type": "route", "name": "directory.org-chart" }
+        ]},
+        { "id": "1.8", "label": "Self-service profile edit", "all": [
+          { "type": "class", "name": "App\\Modules\\Directory\\Livewire\\ProfileEdit" },
+          { "type": "route", "name": "directory.profile.edit" }
+        ]},
+        { "id": "1.9", "label": "Admin user CRUD + deactivate sessions", "all": [
+          { "type": "class", "name": "App\\Modules\\Admin\\Services\\UserAdminService" },
+          { "type": "route", "name": "admin.users.index" },
+          { "type": "file_contains", "path": "app/Modules/Admin/Services/UserAdminService.php", "needle": "terminateSessions" }
+        ]},
+        { "id": "1.10", "label": "Permission matrix", "all": [
+          { "type": "class", "name": "App\\Modules\\Admin\\Livewire\\PermissionMatrix" },
+          { "type": "route", "name": "admin.permissions" }
+        ]},
+        { "id": "1.T", "label": "Phase 1 UR-DIR feature tests", "all": [
+          { "type": "file", "path": "tests/Feature/Phase1DirectoryTest.php" },
+          { "type": "file_contains", "path": "tests/Feature/Phase1DirectoryTest.php", "needle": "UR-DIR-01" },
+          { "type": "file_contains", "path": "tests/Feature/Phase1DirectoryTest.php", "needle": "UR-DIR-09" }
+        ]}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "News, Documents, Policy",
+      "gate": "Gate 2",
+      "checks": [
+        { "id": "2.N", "label": "News module scaffold", "all": [
+          { "type": "file", "path": "app/Modules/News/module.json" }
+        ]},
+        { "id": "2.D", "label": "Documents module + storage adapter", "all": [
+          { "type": "file", "path": "app/Modules/Documents/module.json" },
+          { "type": "class", "name": "App\\Modules\\Documents\\Contracts\\DocumentStorageAdapter" }
+        ]},
+        { "id": "2.P", "label": "Policy hub module/views", "any": [
+          { "type": "file", "path": "app/Modules/Policies/module.json" },
+          { "type": "file_contains", "path": "app/Modules/Documents", "needle": "is_policy" }
+        ]},
+        { "id": "2.A", "label": "AudienceResolver", "all": [
+          { "type": "class", "name": "App\\Shared\\Services\\AudienceResolver" }
+        ]},
+        { "id": "2.T", "label": "Phase 2 feature tests", "all": [
+          { "type": "file", "path": "tests/Feature/Phase2NewsDocumentsTest.php" }
+        ]}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Dashboard, Calendar, Search",
+      "gate": "Gate 3",
+      "checks": [
+        { "id": "3.W", "label": "Dashboard widget registry", "all": [
+          { "type": "class", "name": "App\\Modules\\Dashboard\\Services\\WidgetRegistry" }
+        ]},
+        { "id": "3.C", "label": "Calendar module", "all": [
+          { "type": "file", "path": "app/Modules/Calendar/module.json" }
+        ]},
+        { "id": "3.S", "label": "Search module + Meilisearch", "all": [
+          { "type": "file", "path": "app/Modules/Search/module.json" },
+          { "type": "file_contains", "path": "composer.json", "needle": "meilisearch" }
+        ]},
+        { "id": "3.T", "label": "Phase 3 feature tests", "all": [
+          { "type": "file", "path": "tests/Feature/Phase3DashboardSearchTest.php" }
+        ]}
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Integrations",
+      "gate": "Gate 4",
+      "checks": [
+        { "id": "4.SSO", "label": "Dashboard SSO adapter", "any": [
+          { "type": "class", "name": "App\\Shared\\Contracts\\SsoAdapter" },
+          { "type": "file", "path": "app/Shared/Adapters/Sso" }
+        ]},
+        { "id": "4.DRV", "label": "Drive broker adapter", "any": [
+          { "type": "class", "name": "App\\Shared\\Contracts\\DriveBroker" },
+          { "type": "file", "path": "app/Shared/Adapters/Drive" }
+        ]},
+        { "id": "4.PLN", "label": "Plane.so adapter", "any": [
+          { "type": "class", "name": "App\\Shared\\Contracts\\PlaneAdapter" },
+          { "type": "file", "path": "app/Shared/Adapters/Plane" }
+        ]},
+        { "id": "4.GOV", "label": "Governex adapter", "any": [
+          { "type": "class", "name": "App\\Shared\\Contracts\\GovernexAdapter" },
+          { "type": "file", "path": "app/Shared/Adapters/Governex" }
+        ]},
+        { "id": "4.PRJ", "label": "Projects module", "all": [
+          { "type": "file", "path": "app/Modules/Projects/module.json" }
+        ]}
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Hardening & Go-Live",
+      "gate": "Gate 5",
+      "checks": [
+        { "id": "5.SEC", "label": "Security hardening artefacts", "manual": true, "note": "OWASP / IDOR suite / rate limits — Gate 5 demo" },
+        { "id": "5.RTO", "label": "Restore drill evidence", "manual": true, "note": "Ops evidence outside repo" },
+        { "id": "5.UAT", "label": "UAT sign-off checklist", "manual": true, "note": "Stakeholder gate — not code" }
+      ]
+    }
+  ]
+}

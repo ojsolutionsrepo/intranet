@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, fileinfo, intl
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-security-blocking
+
+      - name: Pint
+        run: vendor/bin/pint --test
+
+      - name: PHPStan (app level 6)
+        run: vendor/bin/phpstan analyse --memory-limit=1G -c phpstan.neon
+
+      - name: PHPStan (Core level 8)
+        run: vendor/bin/phpstan analyse --memory-limit=1G -c phpstan-core.neon
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install NPM & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Tests
+        env:
+          APP_ENV: testing
+          APP_KEY: base64:2fl+KtvkdxY+A8xOeWYpKzq6XkYzqFq0nqFq0nqFq0n=
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: vendor/bin/pest
