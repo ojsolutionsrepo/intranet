@@ -15,6 +15,7 @@ Agent playbook for delivering the intranet. Stakeholder source docs live at repo
 | Doc | Ref | Path |
 |-----|-----|------|
 | Implementation Plan | OJ-INTRA-IMP-001 | `01_Implementation_Plan (1).md` |
+| Phase 6 Implementation Plan | OJ-INTRA-IMP-006 | `docs/phase6/IMPLEMENTATION_PLAN.md` |
 | User Requirements | OJ-INTRA-URD-001 | `02_User_Requirements_Document.md` |
 | Phase Gates | OJ-INTRA-CHK-001 | `03_Phase_Gate_Verification_Checklist.md` |
 | Architecture | OJ-INTRA-ARC-001 | `04_System_Architecture.md` |
@@ -22,7 +23,7 @@ Agent playbook for delivering the intranet. Stakeholder source docs live at repo
 
 ## Timeline (realistic)
 
-**8–10 weeks** for MVP Must items. Do not compress Phase 5.
+**8–10 weeks** for MVP Must items. Do not compress Phase 5. **Phase 6** is post-MVP (Weeks 11–25) — see [IMP-006](../../../docs/phase6/IMPLEMENTATION_PLAN.md).
 
 | Week | Phase | Focus |
 |------|-------|--------|
@@ -32,9 +33,12 @@ Agent playbook for delivering the intranet. Stakeholder source docs live at repo
 | 6 | 3 | Dashboard, Calendar, Search |
 | 7 | 4 | SSO, Drive, Plane, Governex |
 | 8–9 | 5 | Hardening, migration, UAT, restore drill, go-live |
-| 10 | Buffer | Slippage absorb or early Phase 6 |
+| 10 | Buffer | Slippage absorb or early Phase 6.1 spike |
+| 11–25 | 6 | Could backlog → Workflow → Experience → LMS → Analytics → Integrations/PWA |
 
 **De-scope ladder** (if weeks slip — never cut Phase 5): Governex → Plane deep-link only → Calendar RSVP/recurrence polish → Org chart → News comments.
+
+**Phase 6 de-scope** (if post-MVP slips): PWA → HR sync → LMS video → Experience packs → keep Workflow + SCH-06. See IMP-006 §12.
 
 ## Non-negotiables
 
@@ -66,6 +70,7 @@ PHP 8.3 · Laravel 11 · Blade + Livewire 3 · Alpine.js · Tailwind · MySQL 8 
 app/
 ├── Core/          # registry, hooks, RBAC binding, audit — no business logic
 ├── Modules/       # Directory, Documents, News, Projects, Calendar, Policies, Search, Admin
+│                  # Phase 6+: Workflow, Experience, Learning
 └── Shared/        # User, Department, Team, AudienceResolver, AuditLogger
 ```
 
@@ -115,4 +120,5 @@ When implementing any feature:
 - [architecture.md](reference/architecture.md) — layers, adapters, broker, schema, queues
 - [design-system.md](reference/design-system.md) — tokens, components, Blade/Tailwind
 - [requirements-map.md](reference/requirements-map.md) — UR → phase → gate
-- [gates.md](reference/gates.md) — Gate 0–5 verification summary
+- [gates.md](reference/gates.md) — Gate 0–6 verification summary
+- [Phase 6 IMP](../../../docs/phase6/IMPLEMENTATION_PLAN.md) — OJ-INTRA-IMP-006 post-MVP roadmap

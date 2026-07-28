@@ -131,6 +131,25 @@ MVP widgets: Announcements · My Documents · Upcoming Events · My Projects · 
 
 Absorb slippage. If on track: seed Phase 6.1 workflow engine spike, or deepen hypercare runbooks. Event capture from Phase 3 remains the measurement baseline.
 
-## Phase 6 (post-MVP, Weeks 11+)
+## Phase 6 (post-MVP, Weeks 11–25) → Gate 6
 
-Workflow engine → employee experience → LMS → analytics dashboard → extended integrations (Zenzap, HR/payroll, PWA). Out of MVP scope — see IMP §9.
+**Out of MVP scope.** Full plan: [`docs/phase6/IMPLEMENTATION_PLAN.md`](../../../../docs/phase6/IMPLEMENTATION_PLAN.md) (OJ-INTRA-IMP-006).
+
+**Prerequisite:** Gate 5 Pass or Pass-with-dated-condition. Week 10 may only seed 6.1 workflow spike or hypercare — not LMS/PWA.
+
+| Sub-phase | Weeks | Focus | Key URs |
+|-----------|------:|-------|---------|
+| 6.0 | 11–12 | Could backlog | DIR-10, NEW-09, CAL-06, SCH-06 |
+| 6.1 | 11–14 | Workflow engine + News approval consumer | WFL-01…04, NEW-10 |
+| 6.2 | 14–17 | Employee experience / journeys | EXP-01…05 |
+| 6.3 | 17–20 | LMS lite (`LearningProvider` local first) | LMS-01…05 |
+| 6.4 | 18–21 | Analytics dashboard over `Analytics` events | ANL-01…04 |
+| 6.5 | 21–24 | Zenzap, HR/payroll, PWA | INT-07/08, PWA-01/02 |
+
+**Build order:** Could footholds → Workflow module → Experience (reuses Workflow) → Learning → Admin analytics → adapters + PWA.
+
+**Modules:** `Workflow`, `Experience`, `Learning` under `app/Modules/`; analytics UI in Admin; adapters in `app/Shared/`.
+
+**De-scope ladder:** PWA → HR sync → LMS video → Experience packs → keep Workflow + SCH-06.
+
+**DoD:** Gate 6 tracks in IMP-006 §13; Pest per new `UR-*`; degrade-never-fail on new integrations.

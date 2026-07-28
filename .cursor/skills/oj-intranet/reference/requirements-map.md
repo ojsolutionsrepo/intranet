@@ -154,14 +154,68 @@ When implementing, cite the `UR-*` ID in the PR and write a Pest feature test ag
 | UR-INT-04 | 4 | Governex (or CSV) |
 | UR-ADM-06 | 0 | Module toggle |
 
-## Could (Phase 6 / buffer)
+## Could (Phase 6.0 / buffer)
 
-| Ref | Phase |
-|-----|:-----:|
-| UR-DIR-10 | 3 widget |
-| UR-NEW-09 | 2 comments |
-| UR-CAL-06 | 3 RSVP |
-| UR-SCH-06 | 3 zero-result report |
+| Ref | Origin phase | Note |
+|-----|:------------:|------|
+| UR-DIR-10 | 3 | Directory / new-joiners widget polish |
+| UR-NEW-09 | 2 | News comments |
+| UR-CAL-06 | 3 | Calendar RSVP |
+| UR-SCH-06 | 3 | Zero-result admin report |
+
+Full Phase 6 plan: [`docs/phase6/IMPLEMENTATION_PLAN.md`](../../../../docs/phase6/IMPLEMENTATION_PLAN.md) (OJ-INTRA-IMP-006).
+
+## Phase 6 draft requirements (post-MVP)
+
+Priority: treat as Must **for Gate 6** once scoped into a delivery tranche; de-scope only in writing per IMP-006 §12.
+
+### Workflow (WFL) — 6.1
+
+| Ref | Summary | Sub-phase | Gate |
+|-----|---------|:---------:|------|
+| UR-WFL-01 | Definitions + engine (start/transition/cancel) | 6.1 | 6B |
+| UR-WFL-02 | Authorised transitions + audit | 6.1 | 6B |
+| UR-WFL-03 | Admin instance inspection | 6.1 | 6B |
+| UR-WFL-04 | News as first workflow consumer | 6.1 | 6B |
+| UR-NEW-10 | News approval (Should; consumed by WFL) | 6.1 | 6B |
+
+### Experience (EXP) — 6.2
+
+| Ref | Summary | Sub-phase | Gate |
+|-----|---------|:---------:|------|
+| UR-EXP-01 | Journey definitions | 6.2 | 6C |
+| UR-EXP-02 | Enrolment + workflow steps | 6.2 | 6C |
+| UR-EXP-03 | Manager sign-off | 6.2 | 6C |
+| UR-EXP-04 | Dashboard task widgets | 6.2 | 6C |
+| UR-EXP-05 | Journey notifications | 6.2 | 6C |
+
+### Learning (LMS) — 6.3
+
+| Ref | Summary | Sub-phase | Gate |
+|-----|---------|:---------:|------|
+| UR-LMS-01 | Courses / modules / content | 6.3 | 6D |
+| UR-LMS-02 | Enrolment + progress | 6.3 | 6D |
+| UR-LMS-03 | Mandatory / policy link | 6.3 | 6D |
+| UR-LMS-04 | Completion matrix export | 6.3 | 6D |
+| UR-LMS-05 | Profile progress | 6.3 | 6D |
+
+### Analytics (ANL) — 6.4
+
+| Ref | Summary | Sub-phase | Gate |
+|-----|---------|:---------:|------|
+| UR-ANL-01 | Admin aggregates (search, downloads, news, SSO) | 6.4 | 6E |
+| UR-ANL-02 | Filters + CSV export | 6.4 | 6E |
+| UR-ANL-03 | Instrumentation completeness | 6.4 | 6E |
+| UR-ANL-04 | Event retention / GDPR | 6.4 | 6E |
+
+### Integrations + PWA — 6.5
+
+| Ref | Summary | Sub-phase | Gate |
+|-----|---------|:---------:|------|
+| UR-INT-07 | Zenzap notify adapter | 6.5 | 6F |
+| UR-INT-08 | HR/payroll directory sync | 6.5 | 6F |
+| UR-PWA-01 | Installable PWA shell | 6.5 | 6F |
+| UR-PWA-02 | Push opt-in | 6.5 | 6F |
 
 ## PRD → URD quick map
 

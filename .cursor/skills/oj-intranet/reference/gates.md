@@ -125,6 +125,25 @@ Critical items:
 
 ---
 
+## Gate 6 — Post-MVP (Weeks 11–25)
+
+**Approvers:** Sponsor (Jon) + PM (Feranmi) + Tech Lead / IT (Victor)
+
+**Prerequisite:** Gate 5 signed. Full checklist: [`docs/phase6/IMPLEMENTATION_PLAN.md`](../../../../docs/phase6/IMPLEMENTATION_PLAN.md) §13.
+
+| Track | Critical proof |
+|-------|----------------|
+| 6A Could backlog | SCH-06, NEW-09, CAL-06, DIR-10 Pass with Pest |
+| 6B Workflow | Definition → instance → News approval; unauthorized transition 403; audits |
+| 6C Experience | Joiner journey + manager sign-off + dashboard tasks |
+| 6D LMS | Course complete + compliance matrix export |
+| 6E Analytics | PRD metric dashboard + GDPR retention |
+| 6F Integrations / PWA | Adapter degrade tests; PWA install smoke; no secrets in repo |
+
+De-scope only per IMP-006 §12 (written PM decision). Do not claim Gate 6 with open in-scope Fail items.
+
+---
+
 ## Sign-off roles
 
 | Role | Name | Confirms |

@@ -242,6 +242,31 @@
         { "id": "5.UAT", "label": "UAT stakeholder sign-off", "manual": true, "note": "≥8 testers / 5 personas — docs/uat/sign-off-checklist.md" },
         { "id": "5.OWASP", "label": "Staging OWASP scan clean", "manual": true, "note": "External ZAP/Burp evidence" }
       ]
+    },
+    {
+      "id": 6,
+      "name": "Post-MVP Expansion",
+      "gate": "Gate 6",
+      "checks": [
+        { "id": "6.IMP", "label": "Phase 6 Implementation Plan (IMP-006)", "all": [
+          { "type": "file", "path": "docs/phase6/IMPLEMENTATION_PLAN.md" },
+          { "type": "file_contains", "path": "docs/phase6/IMPLEMENTATION_PLAN.md", "needle": "OJ-INTRA-IMP-006" },
+          { "type": "file_contains", "path": "docs/phase6/IMPLEMENTATION_PLAN.md", "needle": "UR-WFL-01" }
+        ]},
+        { "id": "6.MAP", "label": "Requirements map Phase 6 UR catalogue", "all": [
+          { "type": "file_contains", "path": ".cursor/skills/oj-intranet/reference/requirements-map.md", "needle": "UR-LMS-01" },
+          { "type": "file_contains", "path": ".cursor/skills/oj-intranet/reference/requirements-map.md", "needle": "UR-PWA-01" }
+        ]},
+        { "id": "6.GATE", "label": "Gate 6 summary in gates.md", "all": [
+          { "type": "file_contains", "path": ".cursor/skills/oj-intranet/reference/gates.md", "needle": "Gate 6" }
+        ]},
+        { "id": "6.0", "label": "Could backlog modules (SCH/NEW/CAL/DIR)", "manual": true, "note": "Build after Gate 5 — see IMP-006 §5" },
+        { "id": "6.1", "label": "Workflow module scaffold", "manual": true, "note": "app/Modules/Workflow/ when 6.1 starts" },
+        { "id": "6.2", "label": "Experience module scaffold", "manual": true, "note": "app/Modules/Experience/ when 6.2 starts" },
+        { "id": "6.3", "label": "Learning module scaffold", "manual": true, "note": "app/Modules/Learning/ when 6.3 starts" },
+        { "id": "6.4", "label": "Admin analytics dashboard", "manual": true, "note": "UR-ANL-* when 6.4 starts" },
+        { "id": "6.5", "label": "Extended integrations + PWA", "manual": true, "note": "Zenzap/HR/PWA when 6.5 starts" }
+      ]
     }
   ]
 }
