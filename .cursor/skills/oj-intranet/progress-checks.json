@@ -166,17 +166,24 @@
       "gate": "Gate 3",
       "checks": [
         { "id": "3.W", "label": "Dashboard widget registry", "all": [
-          { "type": "class", "name": "App\\Modules\\Dashboard\\Services\\WidgetRegistry" }
+          { "type": "class", "name": "App\\Modules\\Dashboard\\Services\\WidgetRegistry" },
+          { "type": "file", "path": "app/Modules/Dashboard/module.json" }
         ]},
         { "id": "3.C", "label": "Calendar module", "all": [
-          { "type": "file", "path": "app/Modules/Calendar/module.json" }
+          { "type": "file", "path": "app/Modules/Calendar/module.json" },
+          { "type": "class", "name": "App\\Modules\\Calendar\\Services\\CalendarService" },
+          { "type": "route", "name": "calendar.index" }
         ]},
         { "id": "3.S", "label": "Search module + Meilisearch", "all": [
           { "type": "file", "path": "app/Modules/Search/module.json" },
-          { "type": "file_contains", "path": "composer.json", "needle": "meilisearch" }
+          { "type": "class", "name": "App\\Modules\\Search\\Services\\SearchService" },
+          { "type": "file_contains", "path": "composer.json", "needle": "meilisearch" },
+          { "type": "route", "name": "search.index" }
         ]},
         { "id": "3.T", "label": "Phase 3 feature tests", "all": [
-          { "type": "file", "path": "tests/Feature/Phase3DashboardSearchTest.php" }
+          { "type": "file", "path": "tests/Feature/Phase3DashboardSearchTest.php" },
+          { "type": "file_contains", "path": "tests/Feature/Phase3DashboardSearchTest.php", "needle": "UR-SCH-03" },
+          { "type": "file_contains", "path": "tests/Feature/Phase3DashboardSearchTest.php", "needle": "UR-CAL-05" }
         ]}
       ]
     },
@@ -211,9 +218,29 @@
       "name": "Hardening & Go-Live",
       "gate": "Gate 5",
       "checks": [
-        { "id": "5.SEC", "label": "Security hardening artefacts", "manual": true, "note": "OWASP / IDOR suite / rate limits — Gate 5 demo" },
-        { "id": "5.RTO", "label": "Restore drill evidence", "manual": true, "note": "Ops evidence outside repo" },
-        { "id": "5.UAT", "label": "UAT sign-off checklist", "manual": true, "note": "Stakeholder gate — not code" }
+        { "id": "5.HDR", "label": "Secure headers middleware", "all": [
+          { "type": "class", "name": "App\\Http\\Middleware\\SecureHeaders" }
+        ]},
+        { "id": "5.AV", "label": "Virus scanner adapter", "all": [
+          { "type": "class", "name": "App\\Shared\\Contracts\\VirusScanner" }
+        ]},
+        { "id": "5.GDPR", "label": "Subject-access export", "all": [
+          { "type": "class", "name": "App\\Shared\\Services\\SubjectAccessExporter" }
+        ]},
+        { "id": "5.IDOR", "label": "IDOR / hardening feature tests", "all": [
+          { "type": "file", "path": "tests/Feature/Phase5HardeningTest.php" }
+        ]},
+        { "id": "5.DOCS", "label": "Ops / UAT / migration scaffolds", "all": [
+          { "type": "file", "path": "docs/ops/restore-drill-template.md" },
+          { "type": "file", "path": "docs/uat/sign-off-checklist.md" },
+          { "type": "file", "path": "docs/migration/taxonomy.md" }
+        ]},
+        { "id": "5.PERF", "label": "k6 performance scripts", "all": [
+          { "type": "file", "path": "perf/k6/load.js" }
+        ]},
+        { "id": "5.RTO", "label": "Restore drill evidence", "manual": true, "note": "Ops evidence outside repo — use docs/ops/restore-drill-template.md" },
+        { "id": "5.UAT", "label": "UAT stakeholder sign-off", "manual": true, "note": "≥8 testers / 5 personas — docs/uat/sign-off-checklist.md" },
+        { "id": "5.OWASP", "label": "Staging OWASP scan clean", "manual": true, "note": "External ZAP/Burp evidence" }
       ]
     }
   ]

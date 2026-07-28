@@ -12,6 +12,7 @@
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^4.3",
+        "meilisearch/meilisearch-php": "^1.16",
         "phpoffice/phpspreadsheet": "*",
         "spatie/laravel-permission": "^6.25"
     },
@@ -88,7 +89,11 @@
         },
         "audit": {
             "block-insecure": false
-        }
+        },
+        "platform": {
+            "php": "8.2.12"
+        },
+        "platform-check": false
     },
     "minimum-stability": "stable",
     "prefer-stable": true

@@ -1,0 +1,6 @@
+{
+  "name": "calendar",
+  "label": "Calendar",
+  "version": "1.0.0",
+  "description": "Company calendar with ICS feeds"
+}

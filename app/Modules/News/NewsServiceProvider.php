@@ -6,6 +6,9 @@ use App\Core\Modules\ModuleRegistry;
 use App\Modules\News\Http\Controllers\NewsController;
 use App\Modules\News\Livewire\NewsComposer;
 use App\Modules\News\Livewire\NewsFeed;
+use App\Modules\News\Models\Post;
+use App\Modules\News\Policies\PostPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -31,6 +34,7 @@ class NewsServiceProvider extends ServiceProvider
             ->views(__DIR__.'/Resources/views', 'news');
 
         View::addNamespace('news', __DIR__.'/Resources/views');
+        Gate::policy(Post::class, PostPolicy::class);
 
         Livewire::component('news.feed', NewsFeed::class);
         Livewire::component('news.composer', NewsComposer::class);

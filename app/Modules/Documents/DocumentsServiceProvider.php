@@ -72,11 +72,11 @@ class DocumentsServiceProvider extends ServiceProvider
 
                     Route::get('/{document}/download', [DocumentController::class, 'download'])
                         ->name('documents.download')
-                        ->middleware('can:documents.view');
+                        ->middleware(['can:documents.view', 'throttle:downloads']);
 
                     Route::get('/{document}/versions/{version}/download', [DocumentController::class, 'downloadVersion'])
                         ->name('documents.download-version')
-                        ->middleware('can:documents.view');
+                        ->middleware(['can:documents.view', 'throttle:downloads']);
 
                     Route::post('/{document}/versions/{version}/restore', [DocumentController::class, 'restoreVersion'])
                         ->name('documents.restore-version')

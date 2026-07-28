@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Auth\SsoCallbackController;
 use App\Http\Controllers\Install\InstallController;
+use App\Http\Controllers\Integrations\DriveOAuthController;
 use App\Http\Middleware\EnsureSessionIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Shared\Services\Settings;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -19,9 +22,22 @@ Route::middleware('install.guest')->prefix('install')->group(function () {
 Route::get('/install/complete', [InstallController::class, 'complete'])->name('install.complete');
 
 Route::get('/', function () {
-    return auth()->check()
+    return Auth::check()
         ? redirect()->route('dashboard')
         : redirect()->route('login');
+});
+
+Route::get('/sso/callback/{provider}', SsoCallbackController::class)
+    ->name('sso.callback')
+    ->middleware('web');
+
+Route::middleware(['web', 'auth', 'session.active'])->group(function () {
+    Route::get('/integrations/drive/connect', [DriveOAuthController::class, 'redirect'])
+        ->name('drive.oauth.redirect');
+    Route::get('/integrations/drive/callback', [DriveOAuthController::class, 'callback'])
+        ->name('drive.oauth.callback');
+    Route::post('/integrations/drive/disconnect', [DriveOAuthController::class, 'disconnect'])
+        ->name('drive.oauth.disconnect');
 });
 
 Route::middleware(['auth', EnsureSessionIsActive::class])->group(function () {

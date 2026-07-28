@@ -17,17 +17,20 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\seed;
+
 beforeEach(function () {
     Storage::fake('local');
-    $this->seed(RoleSeeder::class);
-    $this->seed(DirectorySeeder::class);
-    $this->seed(Phase2Seeder::class);
+    seed(RoleSeeder::class);
+    seed(DirectorySeeder::class);
+    seed(Phase2Seeder::class);
 });
 
 it('UR-NEW-01 shows the news feed with core fields', function () {
     $staff = User::query()->where('email', 'staff@oj.local')->firstOrFail();
 
-    $this->actingAs($staff)
+    actingAs($staff)
         ->get(route('news.index'))
         ->assertOk()
         ->assertSee('Welcome to the intranet news feed')
@@ -38,7 +41,7 @@ it('UR-NEW-02 pins critical posts to the top', function () {
     $staff = User::query()->where('email', 'staff@oj.local')->firstOrFail();
     $feed = app(NewsService::class)->feedFor($staff);
 
-    expect($feed->first()->is_pinned)->toBeTrue();
+    expect(collect($feed->items())->first()->is_pinned)->toBeTrue();
 });
 
 it('UR-NEW-03 sanitises XSS from rich HTML', function () {
@@ -60,11 +63,11 @@ it('UR-NEW-04 hides audience-targeted posts from non-members', function () {
     expect($post->isVisibleTo($staff))->toBeTrue()
         ->and($post->isVisibleTo($jasmine))->toBeFalse();
 
-    $this->actingAs($jasmine)
+    actingAs($jasmine)
         ->get(route('news.show', $post))
-        ->assertNotFound();
+        ->assertForbidden();
 
-    $this->actingAs($staff)
+    actingAs($staff)
         ->get(route('news.show', $post))
         ->assertOk();
 });
@@ -125,7 +128,7 @@ it('UR-DOC-07 enforces department ACL on direct URL', function () {
 
     expect($document->isVisibleTo($opsOnly))->toBeFalse();
 
-    $this->actingAs($opsOnly)
+    actingAs($opsOnly)
         ->get(route('documents.show', $document))
         ->assertForbidden();
 });
@@ -188,7 +191,7 @@ it('UR-POL-01/02/06 policy hub ack is version-specific and resets', function () 
     $document = Document::query()->where('title', 'Remote Working Policy')->firstOrFail();
     $policies = app(PolicyService::class);
 
-    $this->actingAs($jasmine)->get(route('policies.index'))->assertOk()->assertSee('Remote Working Policy');
+    actingAs($jasmine)->get(route('policies.index'))->assertOk()->assertSee('Remote Working Policy');
 
     $policies->acknowledge($document, $jasmine);
     expect($policies->hasAcknowledgedCurrent($document, $jasmine))->toBeTrue();
@@ -205,7 +208,7 @@ it('UR-POL-03 exports compliance matrix CSV', function () {
     $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
     $document = Document::query()->where('title', 'Remote Working Policy')->firstOrFail();
 
-    $response = $this->actingAs($admin)->get(route('policies.compliance', $document));
+    $response = actingAs($admin)->get(route('policies.compliance', $document));
     $response->assertOk();
     expect($response->headers->get('content-disposition'))->toContain('compliance.csv');
 

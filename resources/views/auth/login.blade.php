@@ -4,7 +4,7 @@
 
 @section('content')
     <h1 class="font-display font-semibold text-xl mb-1">Sign in</h1>
-    <p class="note mb-5">Use your company email and password.</p>
+    <p class="note mb-5">Use your company email and password. Local login always works — even when dashboard SSO is unavailable.</p>
 
     <form method="POST" action="{{ route('login') }}" class="space-y-4">
         @csrf

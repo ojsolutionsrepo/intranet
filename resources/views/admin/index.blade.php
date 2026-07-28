@@ -23,6 +23,22 @@
             <h3 class="font-display font-semibold text-base mb-1">Staff import</h3>
             <p class="note">CSV / XLSX with preview.</p>
         </a>
+        <a href="{{ route('admin.integrations') }}" class="card p-5 hover:border-[var(--sig-500)] block">
+            <h3 class="font-display font-semibold text-base mb-1">Integrations</h3>
+            <p class="note">Drive connect, health, Sync now.</p>
+        </a>
+        <a href="{{ route('admin.quick-links') }}" class="card p-5 hover:border-[var(--sig-500)] block">
+            <h3 class="font-display font-semibold text-base mb-1">Quick links</h3>
+            <p class="note">Email, Zenzap, platform SSO launches.</p>
+        </a>
+        <a href="{{ route('admin.settings') }}" class="card p-5 hover:border-[var(--sig-500)] block">
+            <h3 class="font-display font-semibold text-base mb-1">Settings</h3>
+            <p class="note">Site name, idle timeout, privacy contact.</p>
+        </a>
+        <a href="{{ route('admin.compliance') }}" class="card p-5 hover:border-[var(--sig-500)] block">
+            <h3 class="font-display font-semibold text-base mb-1">Compliance</h3>
+            <p class="note">Subject-access + audit export.</p>
+        </a>
     </div>
 
     <div class="card p-5 space-y-4">

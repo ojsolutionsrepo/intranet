@@ -32,6 +32,7 @@ class User extends Authenticatable
         'is_active',
         'last_activity_at',
         'manager_id',
+        'ics_token',
     ];
 
     /**

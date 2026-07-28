@@ -20,6 +20,7 @@ final class DocumentService
         private readonly DocumentStorageAdapter $storage,
         private readonly AudienceResolver $audience,
         private readonly AuditLogger $audit,
+        private readonly \App\Shared\Contracts\VirusScanner $virusScanner,
     ) {}
 
     /**
@@ -29,6 +30,11 @@ final class DocumentService
     public function upload(User $uploader, array $data, UploadedFile $file): array
     {
         $this->assertSafeUpload($file);
+
+        $scan = $this->virusScanner->scan($file->getRealPath());
+        if (! ($scan['clean'] ?? false)) {
+            throw new \RuntimeException('Upload blocked by virus scanner: '.($scan['message'] ?? 'infected'));
+        }
 
         $checksum = hash_file('sha256', $file->getRealPath());
         $duplicate = DocumentVersion::query()->where('checksum_sha256', $checksum)->first();

@@ -41,6 +41,10 @@ class RoleSeeder extends Seeder
             'news.view',
             'documents.view',
             'policies.view',
+            'dashboard.view',
+            'calendar.view',
+            'search.view',
+            'projects.view',
         ]);
         Role::findByName('Guest')->syncPermissions([]);
 

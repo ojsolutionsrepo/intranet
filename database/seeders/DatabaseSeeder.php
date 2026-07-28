@@ -12,6 +12,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             DirectorySeeder::class,
             Phase2Seeder::class,
+            Phase3Seeder::class,
+            Phase4Seeder::class,
         ]);
     }
 }

@@ -74,6 +74,7 @@
                 @endif
             </div>
             <div class="flex items-center gap-3 text-sm">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="window.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true}))" title="Search (Ctrl/Cmd+K)">Search</button>
                 <x-theme-toggle compact />
                 <span class="text-ink-700">{{ auth()->user()?->name }}</span>
                 <form method="POST" action="{{ route('logout') }}">
@@ -101,6 +102,9 @@
         </main>
     </div>
 </div>
+@auth
+    <livewire:search.omnibox />
+@endauth
 <script src="{{ asset('js/theme.js') }}" defer></script>
 @livewireScripts
 </body>
