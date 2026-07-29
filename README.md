@@ -41,6 +41,13 @@ Start **Apache** in the XAMPP Control Panel, then open the first-run wizard:
 
 The wizard checks PHP extensions and writable paths, configures SQLite or MySQL, runs migrations, and creates your admin account. On the final step you can optionally **Load demo data** (directory, news, documents, calendar, projects, and `staff@oj.local`). After that, the installer locks itself (`storage/app/installed`).
 
+If you see Apache **500 Internal Server Error** before the wizard:
+
+1. Open **http://localhost/intranet/server-check.php** — if this loads, Apache → `public/` is OK; follow its checklist.
+2. Confirm Alias is included (step below) and Apache was restarted.
+3. If you copied the project as a zip (not git clone), delete `storage/app/installed` so the installer can run, and ensure `.env` exists (`copy .env.example .env` then `php artisan key:generate`).
+4. Read `C:\xampp\apache\logs\error.log` — `AH00124` means rewrite loop (Alias/RewriteBase); `PHP Fatal` means PHP/vendor/`.env`.
+
 ### Apache Alias (recommended for subdirectory URL)
 
 Without the Alias, Apache may not map `/intranet` → `public/`, and you can see Laravel’s **404 | NOT FOUND** on `/install`.

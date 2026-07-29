@@ -37,6 +37,31 @@ final class Installer
     }
 
     /**
+     * Make HTTP bootable before migrations (copy .env, APP_KEY).
+     * Safe to call on every pre-install request.
+     */
+    public function prepareFreshInstall(): void
+    {
+        if (app()->environment('testing') || self::isInstalled()) {
+            return;
+        }
+
+        $envPath = base_path('.env');
+        if (! File::exists($envPath) && File::exists(base_path('.env.example'))) {
+            File::copy(base_path('.env.example'), $envPath);
+        }
+
+        if (empty(config('app.key'))) {
+            // Avoid Artisan during HTTP boot (can re-enter the container).
+            $key = 'base64:'.base64_encode(random_bytes(32));
+            config(['app.key' => $key]);
+            if (! app()->environment('testing')) {
+                $this->writeEnv(['APP_KEY' => $key]);
+            }
+        }
+    }
+
+    /**
      * @return list<array{id: string, label: string, ok: bool, detail: string}>
      */
     public function requirements(): array
@@ -276,6 +301,18 @@ final class Installer
         }
 
         Artisan::call('migrate', ['--force' => true]);
+
+        // Switch to durable drivers now that tables exist.
+        $this->writeEnv([
+            'SESSION_DRIVER' => 'database',
+            'CACHE_STORE' => 'database',
+            'QUEUE_CONNECTION' => 'database',
+        ]);
+        config([
+            'session.driver' => 'database',
+            'cache.default' => 'database',
+            'queue.default' => 'database',
+        ]);
     }
 
     /**

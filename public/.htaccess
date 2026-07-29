@@ -7,10 +7,10 @@
     # Alias maps /intranet → public/, but Apache still walks parent .htaccess.
     # Ignore the root rewrite-to-public rule or pretty URLs loop (AH00124).
     RewriteOptions IgnoreInherit
-    # Must match Alias path + APP_URL (also set in apache/alias.conf).
-    # Without this, XAMPP Alias pretty URLs 404 or AH00124-loop.
-    # For a DocumentRoot=/public vhost, change to RewriteBase / or remove.
-    RewriteBase /intranet/
+
+    # Auto-detect subdirectory (works for /intranet Alias and DocumentRoot=/public).
+    RewriteCond %{REQUEST_URI}::$1 ^(/.+)/(.*)::\2$
+    RewriteRule ^(.*) - [E=BASE:%1]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
@@ -28,5 +28,5 @@
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
+    RewriteRule ^ %{ENV:BASE}/index.php [L]
 </IfModule>

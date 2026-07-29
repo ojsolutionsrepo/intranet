@@ -14,12 +14,19 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if (! Installer::isInstalled()) {
-            config([
-                'session.driver' => 'file',
-                'cache.default' => 'file',
-                'queue.default' => 'sync',
-            ]);
+        if (Installer::isInstalled() || $this->app->environment('testing')) {
+            return;
+        }
+
+        // Pre-migrate defaults so the installer UI can load on a fresh machine.
+        config([
+            'session.driver' => 'file',
+            'cache.default' => 'file',
+            'queue.default' => 'sync',
+        ]);
+
+        if (! $this->app->runningInConsole()) {
+            app(Installer::class)->prepareFreshInstall();
         }
     }
 }
