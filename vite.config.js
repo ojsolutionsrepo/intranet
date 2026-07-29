@@ -8,4 +8,13 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    // Avoid public/hot writing http://[::1]:5173 — browsers on http://localhost
+    // cannot load that, so the XAMPP app renders unstyled.
+    server: {
+        host: 'localhost',
+        hmr: {
+            host: 'localhost',
+        },
+        cors: true,
+    },
 });
