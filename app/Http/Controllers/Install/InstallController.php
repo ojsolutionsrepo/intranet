@@ -111,10 +111,16 @@ class InstallController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'seed_demo' => ['sometimes', 'boolean'],
         ]);
+
+        $seedDemo = $request->boolean('seed_demo');
 
         try {
             $this->installer->seedFoundation($data);
+            if ($seedDemo) {
+                $this->installer->seedDemo();
+            }
             $this->installer->markInstalled();
         } catch (Throwable $e) {
             return back()->withInput()->withErrors([
@@ -128,7 +134,9 @@ class InstallController extends Controller
             'install.connection',
         ]);
 
-        return redirect()->route('install.complete');
+        return redirect()
+            ->route('install.complete')
+            ->with('install.seeded_demo', $seedDemo);
     }
 
     public function complete(): View|RedirectResponse

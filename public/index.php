@@ -14,6 +14,10 @@ require __DIR__.'/../vendor/autoload.php';
 
 // XAMPP subdirectory without Alias: rewrite via /public/ confuses SCRIPT_NAME.
 require __DIR__.'/../bootstrap/fix-subdirectory.php';
+$_SERVER['OJ_SERVED_VIA_PUBLIC'] = str_ends_with(
+    str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? '')),
+    '/public/index.php'
+) ? '1' : '0';
 $_SERVER = oj_fix_subdirectory_server($_SERVER);
 
 // Bootstrap Laravel and handle the request...

@@ -28,6 +28,15 @@
             <label for="password_confirmation">Confirm password</label>
             <input id="password_confirmation" class="input" type="password" name="password_confirmation" required minlength="8" autocomplete="new-password">
         </div>
+        <div class="field" style="display: flex; gap: 10px; align-items: flex-start">
+            <input id="seed_demo" type="checkbox" name="seed_demo" value="1" @checked(old('seed_demo')) style="margin-top: 3px">
+            <label for="seed_demo" style="font-weight: 500; margin: 0">
+                Load demo data
+                <span class="note" style="display: block; font-weight: 400; margin-top: 4px">
+                    Departments, sample news/documents, calendar, projects, and <span class="font-mono">staff@oj.local</span> / <span class="font-mono">password</span>. Safe for local or staging — skip on production.
+                </span>
+            </label>
+        </div>
         <button type="submit" class="btn btn-primary">Finish installation</button>
     </form>
 @endsection

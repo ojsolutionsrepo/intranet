@@ -12,8 +12,21 @@
                 <div>
                     <div class="font-medium">{{ $check['label'] }}</div>
                     <div class="note" style="font-size: 12px">{{ $check['detail'] }}</div>
+                    @if (! empty($check['hint']) && ($check['id'] ?? '') === 'apache_alias' && str_contains($check['detail'] ?? '', 'fallback'))
+                        <div class="alert alert-warn mt-2" style="font-size: 12px">
+                            <div class="font-semibold mb-1">Optional — add Apache Alias</div>
+                            <ol class="list-decimal pl-4 space-y-1 mb-2">
+                                <li>Enable <span class="font-mono">rewrite_module</span> in <span class="font-mono">httpd.conf</span></li>
+                                <li>Append this line to <span class="font-mono">httpd-vhosts.conf</span> (edit paths in <span class="font-mono">apache/alias.conf</span> if needed):</li>
+                            </ol>
+                            <pre class="font-mono text-[11px] p-2 overflow-x-auto" style="background: var(--paper-2); border-radius: 6px">{{ $check['hint'] }}</pre>
+                            <div class="mt-2">Restart Apache, then refresh. You can continue without this — the installer already handles the fallback.</div>
+                        </div>
+                    @endif
                 </div>
-                @if ($check['ok'])
+                @if (! empty($check['advisory']))
+                    <span class="badge badge-ok">Info</span>
+                @elseif ($check['ok'])
                     <span class="badge badge-ok">OK</span>
                 @else
                     <span class="badge badge-err">Fail</span>

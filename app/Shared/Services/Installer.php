@@ -111,13 +111,50 @@ final class Installer
             'detail' => $hasDbDriver ? 'OK' : 'Enable pdo_sqlite or pdo_mysql in php.ini',
         ];
 
+        $checks[] = $this->apacheUrlCheck();
+
         return $checks;
+    }
+
+    /**
+     * Soft check: Alias is recommended; /public/ fallback still works after path fix.
+     *
+     * @return array{id: string, label: string, ok: bool, detail: string, advisory?: bool, hint?: string}
+     */
+    public function apacheUrlCheck(): array
+    {
+        $viaPublic = ($_SERVER['OJ_SERVED_VIA_PUBLIC'] ?? '0') === '1';
+        $aliasConf = base_path('apache/alias.conf');
+        $includeLine = 'Include "'.str_replace('\\', '/', $aliasConf).'"';
+
+        if ($viaPublic) {
+            return [
+                'id' => 'apache_alias',
+                'label' => 'Apache Alias → public/ (recommended)',
+                'ok' => true,
+                'advisory' => true,
+                'detail' => 'Serving via /public/ fallback. Install will work; add the Alias for cleaner URLs and fewer rewrite edge cases.',
+                'hint' => $includeLine,
+            ];
+        }
+
+        return [
+            'id' => 'apache_alias',
+            'label' => 'Apache Alias → public/ (recommended)',
+            'ok' => true,
+            'advisory' => true,
+            'detail' => 'URL mapping looks healthy (Alias or equivalent).',
+            'hint' => $includeLine,
+        ];
     }
 
     public function requirementsPassed(): bool
     {
         foreach ($this->requirements() as $check) {
-            if (in_array($check['id'], ['pdo_sqlite', 'pdo_mysql'], true)) {
+            if (in_array($check['id'], ['pdo_sqlite', 'pdo_mysql', 'apache_alias'], true)) {
+                continue;
+            }
+            if (! empty($check['advisory'])) {
                 continue;
             }
             if (! $check['ok']) {
@@ -260,7 +297,17 @@ final class Installer
         Role::findByName('Manager')->syncPermissions(
             collect($permissionNames)->reject(fn (string $key) => str_starts_with($key, 'admin.'))->all()
         );
-        Role::findByName('Staff')->syncPermissions(['demo.view']);
+        Role::findByName('Staff')->syncPermissions([
+            'demo.view',
+            'directory.view',
+            'news.view',
+            'documents.view',
+            'policies.view',
+            'dashboard.view',
+            'calendar.view',
+            'search.view',
+            'projects.view',
+        ]);
         Role::findByName('Guest')->syncPermissions([]);
 
         DB::table('modules')->updateOrInsert(
@@ -291,6 +338,18 @@ final class Installer
         app(AuditLogger::class)->log('install.completed', $user, null, [
             'email' => $user->email,
         ], $user->id);
+    }
+
+    /**
+     * Optional demo content (directory, news, docs, calendar, projects).
+     * Does not overwrite the admin account created during install.
+     */
+    public function seedDemo(): void
+    {
+        Artisan::call('db:seed', [
+            '--class' => \Database\Seeders\DemoContentSeeder::class,
+            '--force' => true,
+        ]);
     }
 
     /**

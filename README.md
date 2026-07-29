@@ -39,9 +39,9 @@ Start **Apache** in the XAMPP Control Panel, then open the first-run wizard:
 
 **http://localhost/intranet/install**
 
-The wizard checks PHP extensions and writable paths, configures SQLite or MySQL, runs migrations, and creates your admin account. After that, the installer locks itself (`storage/app/installed`).
+The wizard checks PHP extensions and writable paths, configures SQLite or MySQL, runs migrations, and creates your admin account. On the final step you can optionally **Load demo data** (directory, news, documents, calendar, projects, and `staff@oj.local`). After that, the installer locks itself (`storage/app/installed`).
 
-### Apache Alias (required for subdirectory URL)
+### Apache Alias (recommended for subdirectory URL)
 
 Without the Alias, Apache may not map `/intranet` → `public/`, and you can see Laravel’s **404 | NOT FOUND** on `/install`.
 
