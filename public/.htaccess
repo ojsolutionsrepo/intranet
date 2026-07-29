@@ -4,7 +4,7 @@
     </IfModule>
 
     RewriteEngine On
-    RewriteBase /intranet/
+    # No RewriteBase — works for Alias (/intranet → public) and /…/public/ fallback.
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

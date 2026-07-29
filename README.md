@@ -41,6 +41,23 @@ Start **Apache** in the XAMPP Control Panel, then open the first-run wizard:
 
 The wizard checks PHP extensions and writable paths, configures SQLite or MySQL, runs migrations, and creates your admin account. After that, the installer locks itself (`storage/app/installed`).
 
+### Apache Alias (required for subdirectory URL)
+
+Without the Alias, Apache may not map `/intranet` → `public/`, and you can see Laravel’s **404 | NOT FOUND** on `/install`.
+
+1. In `C:\xampp\apache\conf\httpd.conf`, ensure `LoadModule rewrite_module` is enabled and `Include conf/extra/httpd-vhosts.conf` is active.
+2. Append to `C:\xampp\apache\conf\extra\httpd-vhosts.conf`:
+
+```apache
+Include "C:/xampp/htdocs/intranet/apache/alias.conf"
+```
+
+   Edit paths inside [`apache/alias.conf`](apache/alias.conf) if the project is not at `C:/xampp/htdocs/intranet`.
+3. Restart Apache.
+4. Confirm `APP_URL=http://localhost/intranet` in `.env` (wizard will refresh this later).
+
+**Quick check:** `http://localhost/intranet/up` should return OK (health endpoint). If that 404s, the Alias / rewrite setup is still wrong.
+
 ### Seeded demo accounts (optional)
 
 If you prefer CLI setup instead of the wizard:

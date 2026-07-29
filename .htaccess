@@ -1,9 +1,8 @@
 # Prefer the Apache Alias (apache/alias.conf) so DocumentRoot is public/.
 # This file is a fallback if Alias is not loaded yet.
+# Do not hard-code /intranet/ here — folder name may differ on remote hosts.
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /intranet/
-    RewriteRule ^$ public/index.php [L]
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
