@@ -15,6 +15,10 @@
             <h3 class="font-display font-semibold text-base mb-1">Users</h3>
             <p class="note">Create, edit, and deactivate accounts.</p>
         </a>
+        <a href="{{ route('admin.departments') }}" class="card p-5 hover:border-[var(--sig-500)] block">
+            <h3 class="font-display font-semibold text-base mb-1">Departments</h3>
+            <p class="note">Add and edit departments and leads.</p>
+        </a>
         <a href="{{ route('admin.permissions') }}" class="card p-5 hover:border-[var(--sig-500)] block">
             <h3 class="font-display font-semibold text-base mb-1">Permissions</h3>
             <p class="note">Role × permission matrix.</p>

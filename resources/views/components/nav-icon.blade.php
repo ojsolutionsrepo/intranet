@@ -12,6 +12,7 @@
         str_contains($key, 'search') => 'search',
         str_contains($key, 'project') => 'projects',
         str_contains($key, 'demo') => 'demo',
+        str_contains($key, 'department') => 'departments',
         str_contains($key, 'admin') => 'admin',
         str_contains($key, 'user') => 'users',
         str_contains($key, 'permission') => 'permissions',
@@ -31,6 +32,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            @break
+        @case('departments')
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21V12h6v9"/>
             </svg>
             @break
         @case('news')

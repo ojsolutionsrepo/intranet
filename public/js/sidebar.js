@@ -22,20 +22,15 @@
             }
         }
 
+        const expanded = value === 'expanded';
         document.querySelectorAll('[data-sidebar-toggle]').forEach((btn) => {
-            const expanded = value === 'expanded';
             btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-            if (btn.classList.contains('sidebar-collapse-btn')) {
-                btn.title = expanded ? 'Collapse sidebar' : 'Expand sidebar';
-                const glyph = btn.querySelector('[aria-hidden="true"]');
-                if (glyph) {
-                    glyph.textContent = expanded ? '‹' : '›';
-                }
-            } else if (btn.classList.contains('sidebar-open-btn')) {
+            if (isMobile()) {
                 btn.title = expanded ? 'Close menu' : 'Open menu';
                 btn.setAttribute('aria-label', expanded ? 'Close menu' : 'Open menu');
             } else {
-                btn.title = expanded ? 'Close menu' : 'Open menu';
+                btn.title = expanded ? 'Collapse sidebar' : 'Expand sidebar';
+                btn.setAttribute('aria-label', expanded ? 'Collapse sidebar' : 'Expand sidebar');
             }
         });
     }
@@ -62,7 +57,6 @@
             }
         });
 
-        // Keep desktop preference; default mobile closed on resize into mobile.
         window.matchMedia('(max-width: 767px)').addEventListener('change', (mq) => {
             if (mq.matches) {
                 apply('collapsed', false);

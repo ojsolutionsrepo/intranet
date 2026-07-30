@@ -43,15 +43,6 @@
                 <div class="sidebar-title">{{ $siteName }}</div>
                 <div class="sidebar-meta">v0.1 · INTRANET</div>
             </div>
-            <button type="button"
-                    class="sidebar-collapse-btn"
-                    data-sidebar-toggle
-                    aria-controls="app-sidebar"
-                    aria-expanded="true"
-                    title="Collapse sidebar">
-                <span class="sr-only">Toggle sidebar</span>
-                <span aria-hidden="true">‹</span>
-            </button>
         </div>
 
         <nav class="sidebar-nav">
@@ -89,6 +80,12 @@
                     <x-nav-icon name="users" />
                     <span class="sidebar-link-label">Users</span>
                 </a>
+                <a href="{{ route('admin.departments') }}"
+                   class="sidebar-link {{ request()->routeIs('admin.departments') ? 'is-active' : '' }}"
+                   title="Departments">
+                    <x-nav-icon name="departments" />
+                    <span class="sidebar-link-label">Departments</span>
+                </a>
                 <a href="{{ route('admin.permissions') }}"
                    class="sidebar-link {{ request()->routeIs('admin.permissions') ? 'is-active' : '' }}"
                    title="Permissions">
@@ -106,14 +103,29 @@
         <header class="shell-header">
             <div class="shell-header-left">
                 <button type="button"
-                        class="sidebar-open-btn"
+                        class="sidebar-toggle-btn"
                         data-sidebar-toggle
                         aria-controls="app-sidebar"
-                        aria-expanded="false"
-                        title="Open menu">
-                    <span class="sr-only">Open menu</span>
-                    <svg class="sidebar-hamburger" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        aria-expanded="true"
+                        title="Collapse sidebar">
+                    <span class="sr-only">Toggle sidebar</span>
+                    {{-- Desktop: panel collapse / expand --}}
+                    <svg class="sidebar-toggle-icon sidebar-toggle-icon-collapse" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M9 3v18"/>
+                        <path d="m15 9-3 3 3 3"/>
+                    </svg>
+                    <svg class="sidebar-toggle-icon sidebar-toggle-icon-expand" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M9 3v18"/>
+                        <path d="m13 15 3-3-3-3"/>
+                    </svg>
+                    {{-- Mobile: hamburger / close --}}
+                    <svg class="sidebar-toggle-icon sidebar-toggle-icon-menu" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
                         <path d="M4 7h16M4 12h16M4 17h16"/>
+                    </svg>
+                    <svg class="sidebar-toggle-icon sidebar-toggle-icon-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <path d="M18 6 6 18M6 6l12 12"/>
                     </svg>
                 </button>
                 <div class="text-sm text-ink-500 shell-breadcrumb">

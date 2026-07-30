@@ -4,10 +4,12 @@ namespace App\Modules\Admin;
 
 use App\Core\Modules\ModuleRegistry;
 use App\Modules\Admin\Http\Controllers\ComplianceController;
+use App\Modules\Admin\Http\Controllers\DepartmentAdminController;
 use App\Modules\Admin\Http\Controllers\IntegrationHealthController;
 use App\Modules\Admin\Http\Controllers\PermissionMatrixController;
 use App\Modules\Admin\Http\Controllers\QuickLinkAdminController;
 use App\Modules\Admin\Http\Controllers\UserAdminController;
+use App\Modules\Admin\Livewire\DepartmentManager;
 use App\Modules\Admin\Livewire\PermissionMatrix;
 use App\Modules\Admin\Livewire\QuickLinkManager;
 use App\Modules\Admin\Livewire\SiteSettingsForm;
@@ -17,6 +19,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class AdminServiceProvider extends ServiceProvider
 {
@@ -25,6 +29,7 @@ class AdminServiceProvider extends ServiceProvider
         $registry->register('admin')
             ->permissions([
                 'admin.users.manage' => 'Create, update, and deactivate users',
+                'admin.departments.manage' => 'Create, update, and remove departments',
                 'admin.permissions.manage' => 'Edit the role permission matrix',
                 'admin.settings.manage' => 'Change site settings',
                 'admin.integrations.view' => 'View integration health and trigger sync',
@@ -38,9 +43,18 @@ class AdminServiceProvider extends ServiceProvider
 
         Livewire::component('admin.user-index', UserIndex::class);
         Livewire::component('admin.user-form', UserForm::class);
+        Livewire::component('admin.department-manager', DepartmentManager::class);
         Livewire::component('admin.permission-matrix', PermissionMatrix::class);
         Livewire::component('admin.quick-link-manager', QuickLinkManager::class);
         Livewire::component('admin.site-settings', SiteSettingsForm::class);
+
+        // Existing installs: ensure Admin role receives newly registered permissions.
+        try {
+            Permission::findOrCreate('admin.departments.manage');
+            Role::findByName('Admin')?->givePermissionTo('admin.departments.manage');
+        } catch (\Throwable) {
+            // Roles/permissions tables may not exist yet during first install.
+        }
 
         Route::middleware(['web', 'auth', 'session.active'])
             ->get('/privacy', [ComplianceController::class, 'privacy'])
@@ -60,6 +74,10 @@ class AdminServiceProvider extends ServiceProvider
                 Route::get('/users/{user}/edit', [UserAdminController::class, 'edit'])
                     ->name('admin.users.edit')
                     ->middleware('can:admin.users.manage');
+
+                Route::get('/departments', [DepartmentAdminController::class, 'index'])
+                    ->name('admin.departments')
+                    ->middleware('can:admin.departments.manage');
 
                 Route::get('/permissions', [PermissionMatrixController::class, 'index'])
                     ->name('admin.permissions')
