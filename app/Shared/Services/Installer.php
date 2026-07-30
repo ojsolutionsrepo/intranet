@@ -34,6 +34,8 @@ final class Installer
                 'version' => '0.1.0',
             ], JSON_PRETTY_PRINT),
         );
+
+        $this->promoteRuntimeDrivers();
     }
 
     /**
@@ -305,17 +307,23 @@ final class Installer
         }
 
         Artisan::call('migrate', ['--force' => true]);
+    }
 
-        // Switch to durable drivers now that tables exist.
+    /**
+     * Switch to durable drivers only after install completes.
+     * Doing this during migrate() drops the file session and the wizard
+     * reloads the database step instead of advancing to admin.
+     */
+    public function promoteRuntimeDrivers(): void
+    {
+        if (app()->environment('testing')) {
+            return;
+        }
+
         $this->writeEnv([
             'SESSION_DRIVER' => 'database',
             'CACHE_STORE' => 'database',
             'QUEUE_CONNECTION' => 'database',
-        ]);
-        config([
-            'session.driver' => 'database',
-            'cache.default' => 'database',
-            'queue.default' => 'database',
         ]);
     }
 

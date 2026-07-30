@@ -49,7 +49,8 @@ it('completes installation with sqlite and an admin account', function () {
         ->post(route('install.database.store'), [
             'connection' => 'sqlite',
         ])
-        ->assertRedirect(route('install.admin'));
+        ->assertRedirect(route('install.admin'))
+        ->assertSessionHas('install.database_ok', true);
 
     withSession([
         'install.requirements_ok' => true,
