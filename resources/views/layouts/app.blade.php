@@ -137,13 +137,43 @@
                 </div>
             </div>
             <div class="shell-header-actions">
-                <button type="button" class="btn btn-ghost btn-sm" onclick="window.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true}))" title="Search (Ctrl/Cmd+K)">Search</button>
+                <button type="button"
+                        class="header-icon-btn"
+                        onclick="window.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true}))"
+                        title="Search (Ctrl/Cmd+K)"
+                        aria-label="Search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                </button>
                 <x-theme-toggle compact />
-                <span class="text-ink-700 shell-user-name">{{ auth()->user()?->name }}</span>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="btn btn-ghost btn-sm">Sign out</button>
-                </form>
+                <div class="profile-menu" data-profile-menu>
+                    <button type="button"
+                            class="profile-menu-trigger"
+                            data-profile-menu-toggle
+                            aria-expanded="false"
+                            aria-haspopup="true"
+                            aria-controls="profile-menu-panel"
+                            title="Profile menu">
+                        <span class="profile-menu-avatar" aria-hidden="true">{{ strtoupper(\Illuminate\Support\Str::substr(auth()->user()?->name ?? 'U', 0, 1)) }}</span>
+                        <span class="profile-menu-name">{{ auth()->user()?->name }}</span>
+                        <svg class="profile-menu-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                    </button>
+                    <div id="profile-menu-panel" class="profile-menu-panel" data-profile-menu-panel hidden role="menu">
+                        <a href="{{ route('directory.profile.edit') }}" class="profile-menu-item" role="menuitem">Edit profile</a>
+                        @role('Admin')
+                            <a href="{{ route('admin.settings') }}" class="profile-menu-item" role="menuitem">Settings</a>
+                        @else
+                            <a href="{{ route('privacy.notice') }}" class="profile-menu-item" role="menuitem">Settings</a>
+                        @endrole
+                        <form method="POST" action="{{ route('logout') }}" class="profile-menu-form">
+                            @csrf
+                            <button type="submit" class="profile-menu-item profile-menu-item-danger" role="menuitem">Sign out</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -170,6 +200,7 @@
 @endauth
 <script src="{{ asset('js/theme.js') }}" defer></script>
 <script src="{{ asset('js/sidebar.js') }}" defer></script>
+<script src="{{ asset('js/profile-menu.js') }}" defer></script>
 @livewireScripts
 </body>
 </html>
