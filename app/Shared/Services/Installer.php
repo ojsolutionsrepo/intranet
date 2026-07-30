@@ -212,18 +212,22 @@ final class Installer
         }
 
         $dsn = sprintf(
-            'mysql:host=%s;port=%s;dbname=%s',
+            'mysql:host=%s;port=%s',
             $config['host'] ?? '127.0.0.1',
             $config['port'] ?? '3306',
-            $config['database'] ?? 'oj_intranet',
         );
 
-        new PDO(
+        $pdo = new PDO(
             $dsn,
             $config['username'] ?? 'root',
             $config['password'] ?? '',
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
         );
+
+        $database = $config['database'] ?? 'oj_intranet';
+        $quoted = str_replace('`', '``', $database);
+        $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$quoted}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        $pdo->exec("USE `{$quoted}`");
     }
 
     /**

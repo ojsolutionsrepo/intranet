@@ -21,7 +21,6 @@
         .check-row:last-child { border-bottom: 0; }
         .field { margin-bottom: 16px; }
         .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-700); margin-bottom: 6px; }
-        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6" style="background: var(--paper-1)">

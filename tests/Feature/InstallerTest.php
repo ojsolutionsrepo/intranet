@@ -25,6 +25,17 @@ it('shows requirement checks on the first step', function () {
         ->assertSee('Apache Alias');
 });
 
+it('shows mysql credential fields without depending on a CDN', function () {
+    withSession(['install.requirements_ok' => true])
+        ->get(route('install.database'))
+        ->assertOk()
+        ->assertSee('name="host"', false)
+        ->assertSee('name="database"', false)
+        ->assertSee('name="username"', false)
+        ->assertDontSee('cdn.jsdelivr.net')
+        ->assertDontSee('alpinejs');
+});
+
 it('blocks the database step until requirements are confirmed', function () {
     get(route('install.database'))
         ->assertRedirect(route('install.requirements'));
