@@ -32,9 +32,10 @@
     $menu = app(\App\Core\Modules\ModuleRegistry::class)->menuItems();
     $siteName = app(\App\Shared\Services\Settings::class)->get('site_name', 'OJ Intranet');
 @endphp
-<div class="shell" data-shell>
-    <div class="sidebar-backdrop" data-sidebar-close aria-hidden="true"></div>
 
+{{-- Drawer lives outside the shell so it overlays page content on mobile --}}
+<div class="sidebar-drawer" data-sidebar-drawer>
+    <div class="sidebar-backdrop" data-sidebar-close aria-hidden="true"></div>
     <aside class="sidebar" id="app-sidebar" aria-label="Main navigation">
         <div class="sidebar-brand">
             <div class="sidebar-mark" aria-hidden="true">OJ</div>
@@ -59,7 +60,7 @@
                 <a href="{{ route('dashboard') }}"
                    class="sidebar-link {{ request()->routeIs('dashboard') ? 'is-active' : '' }}"
                    title="Dashboard">
-                    <span class="sidebar-link-abbr" aria-hidden="true">D</span>
+                    <x-nav-icon name="dashboard" />
                     <span class="sidebar-link-label">Dashboard</span>
                 </a>
                 @foreach ($menu as $item)
@@ -67,7 +68,7 @@
                         <a href="{{ route($item['route']) }}"
                            class="sidebar-link {{ request()->routeIs($item['route']) ? 'is-active' : '' }}"
                            title="{{ $item['label'] }}">
-                            <span class="sidebar-link-abbr" aria-hidden="true">{{ \Illuminate\Support\Str::substr($item['label'], 0, 1) }}</span>
+                            <x-nav-icon :name="$item['label']" />
                             <span class="sidebar-link-label">{{ $item['label'] }}</span>
                         </a>
                     @endif
@@ -79,36 +80,41 @@
                 <a href="{{ route('admin.index') }}"
                    class="sidebar-link {{ request()->routeIs('admin.index') ? 'is-active' : '' }}"
                    title="Administration">
-                    <span class="sidebar-link-abbr" aria-hidden="true">A</span>
+                    <x-nav-icon name="admin" />
                     <span class="sidebar-link-label">Administration</span>
                 </a>
                 <a href="{{ route('admin.users.index') }}"
                    class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}"
                    title="Users">
-                    <span class="sidebar-link-abbr" aria-hidden="true">U</span>
+                    <x-nav-icon name="users" />
                     <span class="sidebar-link-label">Users</span>
                 </a>
                 <a href="{{ route('admin.permissions') }}"
                    class="sidebar-link {{ request()->routeIs('admin.permissions') ? 'is-active' : '' }}"
                    title="Permissions">
-                    <span class="sidebar-link-abbr" aria-hidden="true">P</span>
+                    <x-nav-icon name="permissions" />
                     <span class="sidebar-link-label">Permissions</span>
                 </a>
             </div>
             @endrole
         </nav>
     </aside>
+</div>
 
+<div class="shell" data-shell>
     <div class="shell-main">
         <header class="shell-header">
             <div class="shell-header-left">
                 <button type="button"
-                        class="btn btn-ghost btn-sm sidebar-open-btn"
+                        class="sidebar-open-btn"
                         data-sidebar-toggle
                         aria-controls="app-sidebar"
                         aria-expanded="false"
                         title="Open menu">
-                    Menu
+                    <span class="sr-only">Open menu</span>
+                    <svg class="sidebar-hamburger" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 7h16M4 12h16M4 17h16"/>
+                    </svg>
                 </button>
                 <div class="text-sm text-ink-500 shell-breadcrumb">
                     @hasSection('breadcrumb')
@@ -118,10 +124,10 @@
                     @endif
                 </div>
             </div>
-            <div class="flex items-center gap-3 text-sm">
+            <div class="shell-header-actions">
                 <button type="button" class="btn btn-ghost btn-sm" onclick="window.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true}))" title="Search (Ctrl/Cmd+K)">Search</button>
                 <x-theme-toggle compact />
-                <span class="text-ink-700">{{ auth()->user()?->name }}</span>
+                <span class="text-ink-700 shell-user-name">{{ auth()->user()?->name }}</span>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="btn btn-ghost btn-sm">Sign out</button>

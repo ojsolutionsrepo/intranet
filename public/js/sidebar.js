@@ -31,6 +31,9 @@
                 if (glyph) {
                     glyph.textContent = expanded ? '‹' : '›';
                 }
+            } else if (btn.classList.contains('sidebar-open-btn')) {
+                btn.title = expanded ? 'Close menu' : 'Open menu';
+                btn.setAttribute('aria-label', expanded ? 'Close menu' : 'Open menu');
             } else {
                 btn.title = expanded ? 'Close menu' : 'Open menu';
             }
