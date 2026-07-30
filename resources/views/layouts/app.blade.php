@@ -6,6 +6,20 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'OJ Intranet'))</title>
     <x-theme-boot />
+    <script>
+        (function () {
+            try {
+                var key = 'oj-sidebar';
+                var stored = localStorage.getItem(key);
+                if (stored !== 'collapsed' && stored !== 'expanded') {
+                    stored = window.matchMedia('(max-width: 767px)').matches ? 'collapsed' : 'expanded';
+                }
+                document.documentElement.setAttribute('data-sidebar', stored);
+            } catch (e) {
+                document.documentElement.setAttribute('data-sidebar', 'expanded');
+            }
+        })();
+    </script>
     @if (file_exists(public_path('build/manifest.json')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
@@ -18,60 +32,91 @@
     $menu = app(\App\Core\Modules\ModuleRegistry::class)->menuItems();
     $siteName = app(\App\Shared\Services\Settings::class)->get('site_name', 'OJ Intranet');
 @endphp
-<div class="min-h-screen grid md:grid-cols-[240px_1fr]">
-    <aside class="bg-oj-900 text-oj-100 p-5 md:sticky md:top-0 md:h-screen md:overflow-y-auto border-r border-oj-800">
-        <div class="flex items-center gap-3 mb-8">
-            <div class="w-8 h-8 rounded-md bg-signal-500 text-oj-900 font-display font-bold grid place-items-center text-base">OJ</div>
-            <div>
-                <div class="font-display font-semibold text-[15px] tracking-tight">{{ $siteName }}</div>
-                <div class="font-mono text-[11px] text-oj-400">v0.1 · INTRANET</div>
+<div class="shell" data-shell>
+    <div class="sidebar-backdrop" data-sidebar-close aria-hidden="true"></div>
+
+    <aside class="sidebar" id="app-sidebar" aria-label="Main navigation">
+        <div class="sidebar-brand">
+            <div class="sidebar-mark" aria-hidden="true">OJ</div>
+            <div class="sidebar-brand-text">
+                <div class="sidebar-title">{{ $siteName }}</div>
+                <div class="sidebar-meta">v0.1 · INTRANET</div>
             </div>
+            <button type="button"
+                    class="sidebar-collapse-btn"
+                    data-sidebar-toggle
+                    aria-controls="app-sidebar"
+                    aria-expanded="true"
+                    title="Collapse sidebar">
+                <span class="sr-only">Toggle sidebar</span>
+                <span aria-hidden="true">‹</span>
+            </button>
         </div>
 
-        <nav class="space-y-5">
-            <div>
-                <div class="text-[10px] uppercase tracking-[0.12em] text-oj-400 font-semibold mb-2 px-2">Main</div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Main</div>
                 <a href="{{ route('dashboard') }}"
-                   class="block px-3 py-2 rounded-sm text-[13.5px] mb-0.5 {{ request()->routeIs('dashboard') ? 'bg-oj-800 text-white' : 'text-oj-200 hover:bg-oj-800 hover:text-white' }}">
-                    Dashboard
+                   class="sidebar-link {{ request()->routeIs('dashboard') ? 'is-active' : '' }}"
+                   title="Dashboard">
+                    <span class="sidebar-link-abbr" aria-hidden="true">D</span>
+                    <span class="sidebar-link-label">Dashboard</span>
                 </a>
                 @foreach ($menu as $item)
                     @if (empty($item['permission']) || auth()->user()?->can($item['permission']))
                         <a href="{{ route($item['route']) }}"
-                           class="block px-3 py-2 rounded-sm text-[13.5px] mb-0.5 {{ request()->routeIs($item['route']) ? 'bg-oj-800 text-white' : 'text-oj-200 hover:bg-oj-800 hover:text-white' }}">
-                            {{ $item['label'] }}
+                           class="sidebar-link {{ request()->routeIs($item['route']) ? 'is-active' : '' }}"
+                           title="{{ $item['label'] }}">
+                            <span class="sidebar-link-abbr" aria-hidden="true">{{ \Illuminate\Support\Str::substr($item['label'], 0, 1) }}</span>
+                            <span class="sidebar-link-label">{{ $item['label'] }}</span>
                         </a>
                     @endif
                 @endforeach
             </div>
             @role('Admin')
-            <div>
-                <div class="text-[10px] uppercase tracking-[0.12em] text-oj-400 font-semibold mb-2 px-2">Admin</div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Admin</div>
                 <a href="{{ route('admin.index') }}"
-                   class="block px-3 py-2 rounded-sm text-[13.5px] mb-0.5 {{ request()->routeIs('admin.index') ? 'bg-oj-800 text-white' : 'text-oj-200 hover:bg-oj-800 hover:text-white' }}">
-                    Administration
+                   class="sidebar-link {{ request()->routeIs('admin.index') ? 'is-active' : '' }}"
+                   title="Administration">
+                    <span class="sidebar-link-abbr" aria-hidden="true">A</span>
+                    <span class="sidebar-link-label">Administration</span>
                 </a>
                 <a href="{{ route('admin.users.index') }}"
-                   class="block px-3 py-2 rounded-sm text-[13.5px] mb-0.5 {{ request()->routeIs('admin.users.*') ? 'bg-oj-800 text-white' : 'text-oj-200 hover:bg-oj-800 hover:text-white' }}">
-                    Users
+                   class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}"
+                   title="Users">
+                    <span class="sidebar-link-abbr" aria-hidden="true">U</span>
+                    <span class="sidebar-link-label">Users</span>
                 </a>
                 <a href="{{ route('admin.permissions') }}"
-                   class="block px-3 py-2 rounded-sm text-[13.5px] mb-0.5 {{ request()->routeIs('admin.permissions') ? 'bg-oj-800 text-white' : 'text-oj-200 hover:bg-oj-800 hover:text-white' }}">
-                    Permissions
+                   class="sidebar-link {{ request()->routeIs('admin.permissions') ? 'is-active' : '' }}"
+                   title="Permissions">
+                    <span class="sidebar-link-abbr" aria-hidden="true">P</span>
+                    <span class="sidebar-link-label">Permissions</span>
                 </a>
             </div>
             @endrole
         </nav>
     </aside>
 
-    <div class="flex flex-col min-w-0">
-        <header class="bg-paper-0 border-b border-[var(--line)] px-5 md:px-8 py-3 flex items-center justify-between gap-4">
-            <div class="text-sm text-ink-500">
-                @hasSection('breadcrumb')
-                    @yield('breadcrumb')
-                @else
-                    <span class="font-mono text-xs">{{ request()->path() }}</span>
-                @endif
+    <div class="shell-main">
+        <header class="shell-header">
+            <div class="shell-header-left">
+                <button type="button"
+                        class="btn btn-ghost btn-sm sidebar-open-btn"
+                        data-sidebar-toggle
+                        aria-controls="app-sidebar"
+                        aria-expanded="false"
+                        title="Open menu">
+                    Menu
+                </button>
+                <div class="text-sm text-ink-500 shell-breadcrumb">
+                    @hasSection('breadcrumb')
+                        @yield('breadcrumb')
+                    @else
+                        <span class="font-mono text-xs">{{ request()->path() }}</span>
+                    @endif
+                </div>
             </div>
             <div class="flex items-center gap-3 text-sm">
                 <button type="button" class="btn btn-ghost btn-sm" onclick="window.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true}))" title="Search (Ctrl/Cmd+K)">Search</button>
@@ -84,7 +129,7 @@
             </div>
         </header>
 
-        <main class="p-5 md:p-8 max-w-[1100px] w-full">
+        <main class="shell-content">
             @if (session('status'))
                 <div class="alert alert-info mb-4">{{ session('status') }}</div>
             @endif
@@ -106,6 +151,7 @@
     <livewire:search.omnibox />
 @endauth
 <script src="{{ asset('js/theme.js') }}" defer></script>
+<script src="{{ asset('js/sidebar.js') }}" defer></script>
 @livewireScripts
 </body>
 </html>

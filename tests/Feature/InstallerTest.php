@@ -75,6 +75,18 @@ it('completes installation with sqlite and an admin account', function () {
     get(route('install.requirements'))->assertRedirect(route('login'));
 });
 
+it('keeps installer session after database step so admin is reachable', function () {
+    withSession(['install.requirements_ok' => true])
+        ->post(route('install.database.store'), [
+            'connection' => 'sqlite',
+        ])
+        ->assertRedirect(route('install.admin'));
+
+    get(route('install.admin'))
+        ->assertOk()
+        ->assertSee('Admin account');
+});
+
 it('optionally seeds demo content during install', function () {
     withSession([
         'install.requirements_ok' => true,
