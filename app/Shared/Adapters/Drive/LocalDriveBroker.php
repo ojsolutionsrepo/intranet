@@ -23,6 +23,11 @@ final class LocalDriveBroker implements DriveBroker
         return 'local_mirror';
     }
 
+    public function configured(): bool
+    {
+        return false;
+    }
+
     public function isConnected(): bool
     {
         return false;

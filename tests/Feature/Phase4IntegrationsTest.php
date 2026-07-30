@@ -242,7 +242,35 @@ it('admin can manage quick links and Drive connect UI is present', function () {
         ->get(route('admin.integrations'))
         ->assertOk()
         ->assertSee('Google Drive')
-        ->assertSee('Connect Google Drive');
+        ->assertSee('GOOGLE_DRIVE_CLIENT_ID')
+        ->assertSee(route('drive.oauth.callback'));
 
     expect(app(DriveBroker::class)->isConnected())->toBeFalse();
+    expect(app(DriveBroker::class)->configured())->toBeFalse();
+});
+
+it('Drive OAuth redirect warns when credentials are missing', function () {
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+
+    actingAs($admin)
+        ->get(route('drive.oauth.redirect'))
+        ->assertRedirect(route('admin.integrations'))
+        ->assertSessionHas('warning');
+});
+
+it('Drive OAuth redirect sends admin to Google when configured', function () {
+    config([
+        'integrations.drive.enabled' => true,
+        'integrations.drive.client_id' => 'test-client-id.apps.googleusercontent.com',
+        'integrations.drive.client_secret' => 'test-client-secret',
+    ]);
+    app()->forgetInstance(DriveBroker::class);
+
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+
+    $response = actingAs($admin)->get(route('drive.oauth.redirect'));
+
+    $response->assertRedirect();
+    expect($response->headers->get('Location'))->toStartWith('https://accounts.google.com/o/oauth2/v2/auth');
+    expect(session('drive_oauth_state'))->not->toBeEmpty();
 });

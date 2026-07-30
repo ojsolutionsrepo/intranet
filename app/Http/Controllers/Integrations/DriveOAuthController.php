@@ -21,8 +21,12 @@ class DriveOAuthController extends Controller
 
         $url = $drive->authorizationUrl($state);
         if (! $url) {
+            $hint = ! config('integrations.drive.enabled')
+                ? 'Set DRIVE_BROKER_ENABLED=true and GOOGLE_DRIVE_CLIENT_ID / SECRET in .env first.'
+                : 'Set GOOGLE_DRIVE_CLIENT_ID and GOOGLE_DRIVE_CLIENT_SECRET in .env first.';
+
             return redirect()->route('admin.integrations')
-                ->with('warning', 'Set GOOGLE_DRIVE_CLIENT_ID and GOOGLE_DRIVE_CLIENT_SECRET in .env first.');
+                ->with('warning', $hint);
         }
 
         return redirect()->away($url);

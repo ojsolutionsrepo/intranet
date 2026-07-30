@@ -10,6 +10,9 @@ interface DriveBroker
 {
     public function name(): string;
 
+    /** True when OAuth client id/secret are present (not necessarily connected). */
+    public function configured(): bool;
+
     public function isConnected(): bool;
 
     /**

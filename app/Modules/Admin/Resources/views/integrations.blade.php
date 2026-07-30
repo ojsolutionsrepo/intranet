@@ -31,6 +31,22 @@
     <div class="card p-5 mb-6">
         <h2 class="font-display font-semibold text-lg mb-2">Google Drive</h2>
         <p class="note mb-4">Connect a Google account with <strong>read, update, and write</strong> access. Document listings still use the intranet ACL; Drive is only used for file I/O and cache fill.</p>
+
+        <ul class="note text-[12.5px] space-y-1.5 mb-4 font-mono">
+            <li>
+                <span class="badge badge-{{ $driveEnabled ? 'ok' : 'warn' }}">{{ $driveEnabled ? 'On' : 'Off' }}</span>
+                DRIVE_BROKER_ENABLED
+            </li>
+            <li>
+                <span class="badge badge-{{ $driveConfigured ? 'ok' : 'warn' }}">{{ $driveConfigured ? 'Set' : 'Missing' }}</span>
+                GOOGLE_DRIVE_CLIENT_ID / SECRET
+            </li>
+            <li>
+                <span class="badge badge-{{ $driveFolderId ? 'ok' : 'warn' }}">{{ $driveFolderId ? 'Set' : 'Optional' }}</span>
+                GOOGLE_DRIVE_FOLDER_ID
+            </li>
+        </ul>
+
         @if ($drive->isConnected() && $driveConnection)
             <p class="text-[13.5px] mb-3">
                 Connected as <span class="font-mono">{{ $driveConnection->account_email }}</span>
@@ -41,9 +57,22 @@
                 <button type="submit" class="btn btn-ghost btn-sm">Disconnect</button>
             </form>
             <a href="https://drive.google.com" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">Open Drive</a>
-        @else
+        @elseif ($driveConfigured)
             <a href="{{ route('drive.oauth.redirect') }}" class="btn btn-primary btn-sm">Connect Google Drive</a>
-            <p class="note mt-3">Requires <span class="font-mono">GOOGLE_DRIVE_CLIENT_ID</span> / <span class="font-mono">SECRET</span> in .env (OAuth consent screen with Drive scopes).</p>
+            <p class="note mt-3">OAuth redirect URI (must match Google Cloud exactly):</p>
+            <p class="font-mono text-[12px] break-all mt-1 p-2 bg-[var(--surface-2)] border border-[var(--line)]">{{ $driveCallbackUrl }}</p>
+        @else
+            <p class="note mb-3">Add OAuth credentials to <span class="font-mono">.env</span>, then run <span class="font-mono">php artisan config:clear</span> and reload this page.</p>
+            <ol class="note text-[13px] list-decimal pl-5 space-y-2 mb-4">
+                <li>Google Cloud Console → enable <strong>Google Drive API</strong></li>
+                <li>Create OAuth client type <strong>Web application</strong></li>
+                <li>Add authorized redirect URI:
+                    <span class="font-mono text-[12px] block mt-1 break-all">{{ $driveCallbackUrl }}</span>
+                </li>
+                <li>Paste Client ID / Secret into <span class="font-mono">GOOGLE_DRIVE_CLIENT_ID</span> and <span class="font-mono">GOOGLE_DRIVE_CLIENT_SECRET</span></li>
+                <li>Set <span class="font-mono">DRIVE_BROKER_ENABLED=true</span>@if(! $driveEnabled) <span class="badge badge-warn ml-1">currently off</span>@endif</li>
+            </ol>
+            <a href="{{ route('drive.oauth.redirect') }}" class="btn btn-ghost btn-sm opacity-60 pointer-events-none" aria-disabled="true">Connect Google Drive</a>
         @endif
     </div>
 

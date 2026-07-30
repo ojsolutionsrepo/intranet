@@ -92,7 +92,8 @@ class CoreServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(DriveBroker::class, function () {
-            if (filled(config('integrations.drive.client_id'))
+            if (config('integrations.drive.enabled')
+                && filled(config('integrations.drive.client_id'))
                 && filled(config('integrations.drive.client_secret'))) {
                 return new GoogleDriveOAuthDriver(
                     config('integrations.drive.client_id'),
