@@ -34,8 +34,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('category')->default('General');
             $table->string('colour', 16)->default('#0ea5e9');
-            $table->timestamp('starts_at');
-            $table->timestamp('ends_at');
+            $table->dateTime('starts_at');
+            $table->dateTime('ends_at');
             $table->boolean('all_day')->default(false);
             $table->string('location')->nullable();
             $table->json('audience')->nullable();
