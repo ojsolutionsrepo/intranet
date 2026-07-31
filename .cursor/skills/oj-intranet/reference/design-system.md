@@ -44,6 +44,11 @@ Source of truth: `05_Design_System.html`. Tokens are the contract; components ar
 
   /* Radius */
   --r-sm: 4px; --r-md: 6px; --r-lg: 10px; --r-full: 999px;
+
+  /* Liquid glass (chrome: header, sidebar, menus — not dense content cards) */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-blur: 16px;
+  --glass-sidebar-bg: rgba(14, 26, 43, 0.84);
 }
 ```
 
