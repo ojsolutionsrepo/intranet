@@ -16,8 +16,8 @@
     }
 
     function apply(theme) {
-        const value = theme || localStorage.getItem(KEY) || 'system';
-        const mode = value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
+        const value = theme || localStorage.getItem(KEY) || 'dark';
+        const mode = value === 'light' || value === 'dark' || value === 'system' ? value : 'dark';
 
         document.documentElement.setAttribute('data-theme', mode);
         document.documentElement.setAttribute('data-theme-resolved', resolved(mode));

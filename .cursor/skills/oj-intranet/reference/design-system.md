@@ -52,7 +52,7 @@ Source of truth: `05_Design_System.html`. Tokens are the contract; components ar
 }
 ```
 
-Support `data-theme="light|dark|system"` on `<html>` (user toggle). Dark tokens remapped for ink/paper/line. System follows `prefers-color-scheme`. Persist choice in `localStorage` key `oj-theme`.
+Support `data-theme="light|dark|system"` on `<html>` (user toggle). Default is **dark** (Governex-like deep canvas + glass panels, using OJ slate / amber signal — not cyan). Dark tokens remapped for ink/paper/line/atmosphere. System follows `prefers-color-scheme`. Persist choice in `localStorage` key `oj-theme`.
 
 ## Tailwind theme.extend
 

@@ -3,9 +3,9 @@
 (function () {
     try {
         var key = 'oj-theme';
-        var stored = localStorage.getItem(key) || 'system';
+        var stored = localStorage.getItem(key) || 'dark';
         if (stored !== 'light' && stored !== 'dark' && stored !== 'system') {
-            stored = 'system';
+            stored = 'dark';
         }
         document.documentElement.setAttribute('data-theme', stored);
         if (stored === 'system') {
