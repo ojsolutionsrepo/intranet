@@ -1,6 +1,14 @@
 (function () {
     const KEY = 'oj-theme';
-    const ORDER = ['system', 'light', 'dark'];
+    const SCHEME_KEY = 'oj-theme-scheme';
+    const ORDER = ['dark', 'light', 'system'];
+
+    function migrateScheme() {
+        if (localStorage.getItem(SCHEME_KEY) !== 'glass-dark-v1') {
+            localStorage.setItem(KEY, 'dark');
+            localStorage.setItem(SCHEME_KEY, 'glass-dark-v1');
+        }
+    }
 
     function resolved(theme) {
         if (theme === 'dark' || theme === 'light') {
@@ -16,6 +24,7 @@
     }
 
     function apply(theme) {
+        migrateScheme();
         const value = theme || localStorage.getItem(KEY) || 'dark';
         const mode = value === 'light' || value === 'dark' || value === 'system' ? value : 'dark';
 
@@ -42,28 +51,29 @@
 
     function nextTheme(current) {
         const index = ORDER.indexOf(current);
-        return ORDER[(index + 1) % ORDER.length];
+        return ORDER[(index < 0 ? 0 : index + 1) % ORDER.length];
     }
 
     function bind() {
         document.querySelectorAll('[data-theme-select]').forEach((el) => {
-            el.value = localStorage.getItem(KEY) || 'system';
+            el.value = localStorage.getItem(KEY) || 'dark';
             el.addEventListener('change', () => apply(el.value));
         });
 
         document.querySelectorAll('[data-theme-cycle]').forEach((btn) => {
             btn.addEventListener('click', () => {
-                const current = localStorage.getItem(KEY) || 'system';
+                const current = localStorage.getItem(KEY) || 'dark';
                 apply(nextTheme(current));
             });
         });
     }
 
-    apply(localStorage.getItem(KEY) || 'system');
+    migrateScheme();
+    apply(localStorage.getItem(KEY) || 'dark');
     document.addEventListener('DOMContentLoaded', bind);
 
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-        const current = localStorage.getItem(KEY) || 'system';
+        const current = localStorage.getItem(KEY) || 'dark';
         if (current === 'system') {
             apply('system');
         }
