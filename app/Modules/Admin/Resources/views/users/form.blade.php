@@ -9,6 +9,8 @@
 @endsection
 
 @section('content')
-    <h1 class="font-display font-bold text-3xl tracking-tight mb-6">{{ $userId ? 'Edit user' : 'Add user' }}</h1>
-    <livewire:admin.user-form :user-id="$userId" />
+    <div class="page-form">
+        <h1 class="font-display font-bold text-3xl tracking-tight mb-6">{{ $userId ? 'Edit user' : 'Add user' }}</h1>
+        <livewire:admin.user-form :user-id="$userId" />
+    </div>
 @endsection

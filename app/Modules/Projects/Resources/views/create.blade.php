@@ -9,11 +9,13 @@
 @endsection
 
 @section('content')
-    <div class="mb-6">
-        <h1 class="font-display font-bold text-3xl tracking-tight">Add project</h1>
-        <p class="note mt-2">Manual projects appear on the staff Projects list and My Projects dashboard widget.</p>
-    </div>
-    <div class="card p-5">
-        <livewire:projects.form />
+    <div class="page-form">
+        <div class="mb-6">
+            <h1 class="font-display font-bold text-3xl tracking-tight">Add project</h1>
+            <p class="note mt-2">Manual projects appear on the staff Projects list and My Projects dashboard widget.</p>
+        </div>
+        <div class="card p-5">
+            <livewire:projects.form />
+        </div>
     </div>
 @endsection

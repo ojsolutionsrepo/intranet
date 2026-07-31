@@ -9,9 +9,11 @@
 @endsection
 
 @section('content')
-    <div class="mb-6">
-        <h1 class="font-display font-bold text-3xl tracking-tight">Departments</h1>
-        <p class="note">Create and edit departments used by Directory, audiences, and staff profiles.</p>
+    <div class="page-form-wide">
+        <div class="mb-6">
+            <h1 class="font-display font-bold text-3xl tracking-tight">Departments</h1>
+            <p class="note">Create and edit departments used by Directory, audiences, and staff profiles.</p>
+        </div>
+        <livewire:admin.department-manager />
     </div>
-    <livewire:admin.department-manager />
 @endsection

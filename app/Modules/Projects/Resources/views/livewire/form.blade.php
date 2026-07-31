@@ -1,5 +1,5 @@
 <div>
-    <form wire:submit="save" class="space-y-4 max-w-xl">
+    <form wire:submit="save" class="space-y-4">
         <div>
             <label class="block text-[12.5px] font-semibold mb-1.5">Project name</label>
             <input type="text" class="input" wire:model="name" required>

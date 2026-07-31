@@ -667,6 +667,18 @@ html[data-theme="light"] {
     .shell-content { padding: 32px; }
   }
 
+  /* Narrow create/settings forms — centered within shell-content */
+  .page-form {
+    width: 100%;
+    max-width: 36rem;
+    margin-inline: auto;
+  }
+  .page-form-wide {
+    width: 100%;
+    max-width: 42rem;
+    margin-inline: auto;
+  }
+
   /* Desktop collapsed rail */
   html[data-sidebar="collapsed"] .sidebar { padding: 20px 12px; }
   html[data-sidebar="collapsed"] .sidebar-brand-text,

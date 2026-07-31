@@ -1,5 +1,5 @@
 <div>
-    <form wire:submit="save" class="card p-5 space-y-4 max-w-xl">
+    <form wire:submit="save" class="card p-5 space-y-4">
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)] mb-1">Bio</label>
             <textarea wire:model="bio" rows="4" class="input"></textarea>

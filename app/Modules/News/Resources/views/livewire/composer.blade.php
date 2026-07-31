@@ -1,5 +1,5 @@
 <div>
-    <form wire:submit="save" class="card p-5 space-y-4 max-w-2xl">
+    <form wire:submit="save" class="card p-5 space-y-4">
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)] mb-1">Title</label>
             <input type="text" wire:model="title" class="input">

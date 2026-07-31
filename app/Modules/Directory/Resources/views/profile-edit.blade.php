@@ -9,7 +9,9 @@
 @endsection
 
 @section('content')
-    <h1 class="font-display font-bold text-3xl tracking-tight mb-2">Edit your profile</h1>
-    <p class="note mb-6">You can update bio, photo, phone, location, and expertise. Role, department, and title are managed by Admin.</p>
-    <livewire:directory.profile-edit />
+    <div class="page-form">
+        <h1 class="font-display font-bold text-3xl tracking-tight mb-2">Edit your profile</h1>
+        <p class="note mb-6">You can update bio, photo, phone, location, and expertise. Role, department, and title are managed by Admin.</p>
+        <livewire:directory.profile-edit />
+    </div>
 @endsection

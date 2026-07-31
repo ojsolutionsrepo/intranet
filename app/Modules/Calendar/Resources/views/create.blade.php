@@ -9,6 +9,8 @@
 @endsection
 
 @section('content')
-    <h1 class="font-display font-bold text-3xl tracking-tight mb-6">Create event</h1>
-    <livewire:calendar.event-form />
+    <div class="page-form">
+        <h1 class="font-display font-bold text-3xl tracking-tight mb-6">Create event</h1>
+        <livewire:calendar.event-form />
+    </div>
 @endsection

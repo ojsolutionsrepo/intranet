@@ -9,6 +9,8 @@
 @endsection
 
 @section('content')
-    <h1 class="font-display font-bold text-3xl tracking-tight mb-6">Upload document</h1>
-    <livewire:documents.upload />
+    <div class="page-form">
+        <h1 class="font-display font-bold text-3xl tracking-tight mb-6">Upload document</h1>
+        <livewire:documents.upload />
+    </div>
 @endsection

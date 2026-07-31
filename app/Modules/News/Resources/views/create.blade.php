@@ -9,6 +9,8 @@
 @endsection
 
 @section('content')
-    <h1 class="font-display font-bold text-3xl tracking-tight mb-6">Create post</h1>
-    <livewire:news.composer />
+    <div class="page-form-wide">
+        <h1 class="font-display font-bold text-3xl tracking-tight mb-6">Create post</h1>
+        <livewire:news.composer />
+    </div>
 @endsection

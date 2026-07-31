@@ -1,4 +1,4 @@
-/* OJ Intranet — prebuilt fallback (replace with `npm run build` when Node is available) */
+/* OJ Intranet â€” prebuilt fallback (replace with `npm run build` when Node is available) */
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;
 /* Forced dark glass defaults (synced with app.css) */
 :root,html[data-theme="dark"],html[data-theme="system"][data-theme-resolved="dark"]{
@@ -210,3 +210,4 @@ html[data-sidebar="collapsed"] .sidebar-link.is-active .sidebar-link-icon{width:
 .profile-menu-item-danger{color:var(--err-600)}
 .profile-menu-form{margin:0;border-top:1px solid var(--line);margin-top:4px;padding-top:4px}
 @media (max-width:640px){.profile-menu-name{display:none}.profile-menu-trigger{padding-right:4px}}
+.page-form{width:100%;max-width:36rem;margin-inline:auto}.page-form-wide{width:100%;max-width:42rem;margin-inline:auto}

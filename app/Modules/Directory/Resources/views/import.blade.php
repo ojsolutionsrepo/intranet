@@ -9,7 +9,9 @@
 @endsection
 
 @section('content')
-    <h1 class="font-display font-bold text-3xl tracking-tight mb-2">Import staff</h1>
-    <p class="note mb-6">Upload CSV or XLSX, preview validation errors, then commit valid rows only.</p>
-    <livewire:directory.staff-import />
+    <div class="page-form-wide">
+        <h1 class="font-display font-bold text-3xl tracking-tight mb-2">Import staff</h1>
+        <p class="note mb-6">Upload CSV or XLSX, preview validation errors, then commit valid rows only.</p>
+        <livewire:directory.staff-import />
+    </div>
 @endsection

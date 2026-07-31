@@ -3,7 +3,7 @@
         <div class="alert alert-info mb-4">{{ $resultMessage }}</div>
     @endif
 
-    <form wire:submit="preview" class="card p-5 space-y-4 mb-5 max-w-xl">
+    <form wire:submit="preview" class="card p-5 space-y-4 mb-5">
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)] mb-1">CSV / XLSX file</label>
             <input type="file" wire:model="file" accept=".csv,.txt,.xlsx,.xls" class="input">

@@ -1,5 +1,5 @@
 <div>
-    <form wire:submit="save" class="space-y-4 max-w-lg">
+    <form wire:submit="save" class="space-y-4">
         <div>
             <label class="block text-[12.5px] font-semibold mb-1.5">Site name</label>
             <input type="text" class="input" wire:model="site_name">
