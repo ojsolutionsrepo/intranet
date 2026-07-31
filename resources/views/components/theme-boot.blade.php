@@ -4,10 +4,10 @@
     try {
         var key = 'oj-theme';
         var schemeKey = 'oj-theme-scheme';
-        // One-time migrate to dark glass scheme (Governex-like canvas, OJ colours)
-        if (localStorage.getItem(schemeKey) !== 'glass-dark-v1') {
+        // Force dark glass canvas (v2). Light remains available via theme toggle after.
+        if (localStorage.getItem(schemeKey) !== 'glass-dark-v2') {
             localStorage.setItem(key, 'dark');
-            localStorage.setItem(schemeKey, 'glass-dark-v1');
+            localStorage.setItem(schemeKey, 'glass-dark-v2');
         }
         var stored = localStorage.getItem(key) || 'dark';
         if (stored !== 'light' && stored !== 'dark' && stored !== 'system') {

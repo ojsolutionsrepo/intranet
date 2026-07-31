@@ -1,5 +1,30 @@
 /* OJ Intranet — prebuilt fallback (replace with `npm run build` when Node is available) */
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;
+/* Forced dark glass defaults (synced with app.css) */
+:root,html[data-theme="dark"],html[data-theme="system"][data-theme-resolved="dark"]{
+  --ink-900:#f2f6fa;--ink-700:#c5d0da;--ink-500:#8aa8c4;--ink-300:#5b83a8;
+  --paper-0:#141c28;--paper-1:#080c14;--paper-2:#101826;
+  --line:rgba(226,235,242,.1);--line-strong:rgba(226,235,242,.18);
+  --ok-600:#3ecf6a;--ok-100:rgba(62,207,106,.14);--warn-600:#f0a020;--warn-100:rgba(240,160,32,.16);
+  --err-600:#ff6b6b;--err-100:rgba(255,107,107,.14);--sig-100:rgba(217,123,34,.2);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);--shadow-2:0 12px 40px rgba(0,0,0,.45);
+  --glass-bg:rgba(20,28,40,.55);--glass-bg-strong:rgba(20,28,40,.82);
+  --glass-border:rgba(255,255,255,.1);--glass-border-strong:rgba(255,255,255,.16);
+  --glass-blur:22px;--glass-saturate:1.35;--glass-shadow:0 10px 40px rgba(0,0,0,.4);
+  --glass-sidebar-bg:rgba(8,12,20,.78);--glass-sidebar-border:rgba(91,131,168,.22);--glass-chip-bg:rgba(20,28,40,.45);
+  --glass-panel-bg:rgba(20,28,40,.42);--glass-panel-border:rgba(255,255,255,.1);--glass-panel-blur:18px;
+  --signal-glow:0 0 14px rgba(217,123,34,.55),0 0 36px rgba(217,123,34,.28);
+  --signal-glow-soft:0 0 24px rgba(217,123,34,.18);--ok-glow:0 0 12px rgba(62,207,106,.45);
+  --atmosphere-1:rgba(61,100,137,.32);--atmosphere-2:rgba(92,64,140,.22);--atmosphere-3:rgba(217,123,34,.12);
+  color-scheme:dark;
+}
+.card{background:var(--glass-panel-bg)!important;border:1px solid var(--glass-panel-border)!important;box-shadow:var(--shadow-2),inset 0 1px 0 rgba(255,255,255,.06)!important;backdrop-filter:blur(var(--glass-panel-blur)) saturate(var(--glass-saturate,1.2))!important;-webkit-backdrop-filter:blur(var(--glass-panel-blur)) saturate(var(--glass-saturate,1.2))!important;border-radius:12px!important}
+.btn-primary{box-shadow:var(--signal-glow)!important}
+.sidebar-mark,.profile-menu-avatar{box-shadow:var(--signal-glow)!important}
+.sidebar-link.is-active{background:rgba(217,123,34,.16)!important;box-shadow:inset 3px 0 0 var(--sig-500),var(--signal-glow-soft)!important}
+body{background-color:var(--paper-1)!important;background-image:radial-gradient(ellipse 80% 50% at 12% -10%,var(--atmosphere-1),transparent 55%),radial-gradient(ellipse 60% 45% at 88% 5%,var(--atmosphere-2),transparent 50%),radial-gradient(ellipse 50% 40% at 70% 90%,var(--atmosphere-3),transparent 55%),linear-gradient(165deg,var(--paper-1),var(--paper-2))!important;background-attachment:fixed!important;color:var(--ink-900)!important}
+.shell-header{background:var(--glass-bg)!important;backdrop-filter:blur(var(--glass-blur))!important;-webkit-backdrop-filter:blur(var(--glass-blur))!important;border-bottom:1px solid var(--glass-border-strong)!important}
+500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root,html[data-theme="light"] {
   --oj-900:#0e1a2b;--oj-800:#16273d;--oj-700:#1f374f;--oj-600:#2c4a67;--oj-500:#3d6489;--oj-400:#5b83a8;--oj-300:#8aa8c4;--oj-200:#bcd0e0;--oj-100:#e2ebf2;--oj-50:#f2f6fa;

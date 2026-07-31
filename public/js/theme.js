@@ -4,9 +4,9 @@
     const ORDER = ['dark', 'light', 'system'];
 
     function migrateScheme() {
-        if (localStorage.getItem(SCHEME_KEY) !== 'glass-dark-v1') {
+        if (localStorage.getItem(SCHEME_KEY) !== 'glass-dark-v2') {
             localStorage.setItem(KEY, 'dark');
-            localStorage.setItem(SCHEME_KEY, 'glass-dark-v1');
+            localStorage.setItem(SCHEME_KEY, 'glass-dark-v2');
         }
     }
 
