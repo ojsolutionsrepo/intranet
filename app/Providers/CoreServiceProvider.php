@@ -25,6 +25,7 @@ use App\Shared\Contracts\VirusScanner;
 use App\Shared\Security\ClamAvScanner;
 use App\Shared\Security\NullVirusScanner;
 use App\Shared\Services\AuditLogger;
+use App\Shared\Services\Branding;
 use App\Shared\Services\IntegrationHealthService;
 use App\Shared\Services\Settings;
 use Illuminate\Support\ServiceProvider;
@@ -37,6 +38,7 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->singleton(ModuleRegistry::class);
         $this->app->singleton(AuditLogger::class);
         $this->app->singleton(Settings::class);
+        $this->app->singleton(Branding::class);
 
         $this->registerIntegrations();
 

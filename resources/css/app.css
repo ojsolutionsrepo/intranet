@@ -410,6 +410,14 @@ html[data-theme="light"] {
     font-size: 14px;
     box-shadow: var(--signal-glow);
   }
+  .sidebar-logo {
+    height: 32px;
+    max-width: 120px;
+    width: auto;
+    object-fit: contain;
+    flex-shrink: 0;
+    border-radius: 6px;
+  }
   .sidebar-brand-text { min-width: 0; flex: 1; }
   .sidebar-title {
     font-family: var(--font-display);
@@ -679,8 +687,10 @@ html[data-theme="light"] {
     margin-inline: auto;
   }
 
-  /* Desktop collapsed rail */
-  html[data-sidebar="collapsed"] .sidebar { padding: 20px 12px; }
+  html[data-sidebar="collapsed"] .sidebar-logo {
+    max-width: 32px;
+    height: 32px;
+  }
   html[data-sidebar="collapsed"] .sidebar-brand-text,
   html[data-sidebar="collapsed"] .sidebar-section-label,
   html[data-sidebar="collapsed"] .sidebar-link-label { display: none; }

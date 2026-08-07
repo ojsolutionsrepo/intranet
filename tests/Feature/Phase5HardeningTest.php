@@ -112,6 +112,7 @@ it('privacy notice and subject-access export work for admin', function () {
 });
 
 it('admin can update site settings', function () {
+    Storage::fake('public');
     $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
 
     Livewire\Livewire::actingAs($admin)
@@ -119,11 +120,23 @@ it('admin can update site settings', function () {
         ->set('site_name', 'OJ Portal')
         ->set('session_idle_timeout', 240)
         ->set('privacy_contact', 'dpo@oj.local')
+        ->set('brand_color', '#3d6489')
+        ->set('logo', Illuminate\Http\UploadedFile::fake()->image('logo.png', 120, 40))
+        ->set('favicon', Illuminate\Http\UploadedFile::fake()->image('favicon.png', 32, 32))
         ->call('save')
         ->assertHasNoErrors();
 
-    expect(app(Settings::class)->get('site_name'))->toBe('OJ Portal')
-        ->and((int) app(Settings::class)->get('session_idle_timeout'))->toBe(240);
+    $settings = app(Settings::class);
+    expect($settings->get('site_name'))->toBe('OJ Portal')
+        ->and((int) $settings->get('session_idle_timeout'))->toBe(240)
+        ->and($settings->get('brand_color'))->toBe('#3d6489')
+        ->and($settings->get('site_logo'))->not->toBeEmpty()
+        ->and($settings->get('site_favicon'))->not->toBeEmpty();
+
+    $branding = app(\App\Shared\Services\Branding::class);
+    expect($branding->accentColor())->toBe('#3d6489')
+        ->and($branding->logoUrl())->not->toBeNull()
+        ->and($branding->faviconUrl())->not->toBeNull();
 });
 
 it('gdpr prune command runs dry-run', function () {

@@ -12,7 +12,7 @@
     <div class="page-form">
         <div class="mb-6">
             <h1 class="font-display font-bold text-3xl tracking-tight">Site settings</h1>
-            <p class="note mt-2">Branding and session timeout (UR-ADM-05).</p>
+            <p class="note mt-2">Branding (name, colour, logo, favicon), session timeout, and privacy contact (UR-ADM-05).</p>
         </div>
         @if (session('status'))
             <p class="badge badge-ok mb-4">{{ session('status') }}</p>

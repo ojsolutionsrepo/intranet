@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Sign in') — {{ config('app.name', 'OJ Intranet') }}</title>
     <x-theme-boot />
+    <x-branding />
     @if (file_exists(public_path('build/manifest.json')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
@@ -13,12 +14,22 @@
     @endif
 </head>
 <body class="min-h-screen flex items-center justify-center p-6" style="background: var(--paper-1)">
+@php
+    $settings = app(\App\Shared\Services\Settings::class);
+    $branding = app(\App\Shared\Services\Branding::class);
+    $siteName = $settings->get('site_name', 'OJ Intranet');
+    $logoUrl = $branding->logoUrl();
+@endphp
 <div class="w-full max-w-md">
     <div class="flex items-center justify-between gap-3 mb-6">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-md bg-signal-500 text-oj-900 font-display font-bold grid place-items-center">OJ</div>
+            @if ($logoUrl)
+                <img src="{{ $logoUrl }}" alt="{{ $siteName }}" class="h-10 max-w-[120px] object-contain">
+            @else
+                <div class="w-10 h-10 rounded-md bg-signal-500 text-oj-900 font-display font-bold grid place-items-center" style="background: var(--sig-500)">OJ</div>
+            @endif
             <div>
-                <div class="font-display font-semibold text-lg">OJ Intranet</div>
+                <div class="font-display font-semibold text-lg">{{ $siteName }}</div>
                 <div class="font-mono text-[11px] text-[var(--ink-500)]">Staff portal</div>
             </div>
         </div>

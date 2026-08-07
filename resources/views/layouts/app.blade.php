@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'OJ Intranet'))</title>
     <x-theme-boot />
+    <x-branding />
     <script>
         (function () {
             try {
@@ -30,7 +31,10 @@
 <body>
 @php
     $menu = app(\App\Core\Modules\ModuleRegistry::class)->menuItems();
-    $siteName = app(\App\Shared\Services\Settings::class)->get('site_name', 'OJ Intranet');
+    $settings = app(\App\Shared\Services\Settings::class);
+    $branding = app(\App\Shared\Services\Branding::class);
+    $siteName = $settings->get('site_name', 'OJ Intranet');
+    $logoUrl = $branding->logoUrl();
 @endphp
 
 {{-- Drawer lives outside the shell so it overlays page content on mobile --}}
@@ -38,7 +42,11 @@
     <div class="sidebar-backdrop" data-sidebar-close aria-hidden="true"></div>
     <aside class="sidebar" id="app-sidebar" aria-label="Main navigation">
         <div class="sidebar-brand">
-            <div class="sidebar-mark" aria-hidden="true">OJ</div>
+            @if ($logoUrl)
+                <img src="{{ $logoUrl }}" alt="{{ $siteName }}" class="sidebar-logo">
+            @else
+                <div class="sidebar-mark" aria-hidden="true">OJ</div>
+            @endif
             <div class="sidebar-brand-text">
                 <div class="sidebar-title">{{ $siteName }}</div>
                 <div class="sidebar-meta">v0.1 · INTRANET</div>
