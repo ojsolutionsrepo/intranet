@@ -243,10 +243,67 @@ it('admin can manage quick links and Drive connect UI is present', function () {
         ->assertOk()
         ->assertSee('Google Drive')
         ->assertSee('GOOGLE_DRIVE_CLIENT_ID')
+        ->assertSee('OAuth credentials')
+        ->assertSee('Save to .env')
         ->assertSee(route('drive.oauth.callback'));
 
     expect(app(DriveBroker::class)->isConnected())->toBeFalse();
     expect(app(DriveBroker::class)->configured())->toBeFalse();
+});
+
+it('admin can save Drive OAuth credentials via GUI', function () {
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+
+    Livewire\Livewire::actingAs($admin)
+        ->test(\App\Modules\Admin\Livewire\DriveCredentialsForm::class)
+        ->set('client_id', 'gui-client.apps.googleusercontent.com')
+        ->set('client_secret', 'gui-client-secret')
+        ->set('folder_id', 'folder-abc')
+        ->set('enabled', true)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('admin.integrations'));
+
+    expect(config('integrations.drive.enabled'))->toBeTrue();
+    expect(config('integrations.drive.client_id'))->toBe('gui-client.apps.googleusercontent.com');
+    expect(config('integrations.drive.client_secret'))->toBe('gui-client-secret');
+    expect(config('integrations.drive.folder_id'))->toBe('folder-abc');
+
+    app()->forgetInstance(DriveBroker::class);
+    expect(app(DriveBroker::class)->configured())->toBeTrue();
+    expect(app(DriveBroker::class)->name())->toBe('google_drive_oauth');
+});
+
+it('Drive credentials form rejects enable without client id/secret', function () {
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+
+    Livewire\Livewire::actingAs($admin)
+        ->test(\App\Modules\Admin\Livewire\DriveCredentialsForm::class)
+        ->set('client_id', '')
+        ->set('client_secret', '')
+        ->set('enabled', true)
+        ->call('save')
+        ->assertHasErrors(['enabled']);
+});
+
+it('Installer writeEnv updates Drive keys on a target file', function () {
+    $path = storage_path('framework/testing/drive-env-'.uniqid('', true));
+    file_put_contents($path, "APP_NAME=Intranet\nDRIVE_BROKER_ENABLED=false\nGOOGLE_DRIVE_CLIENT_ID=\n");
+
+    app(\App\Shared\Services\Installer::class)->writeEnv([
+        'DRIVE_BROKER_ENABLED' => 'true',
+        'GOOGLE_DRIVE_CLIENT_ID' => 'from-gui.apps.googleusercontent.com',
+        'GOOGLE_DRIVE_CLIENT_SECRET' => 'secret-from-gui',
+        'GOOGLE_DRIVE_FOLDER_ID' => 'folder-1',
+    ], $path);
+
+    $content = file_get_contents($path);
+    expect($content)->toContain('DRIVE_BROKER_ENABLED=true')
+        ->and($content)->toContain('GOOGLE_DRIVE_CLIENT_ID=from-gui.apps.googleusercontent.com')
+        ->and($content)->toContain('GOOGLE_DRIVE_CLIENT_SECRET=secret-from-gui')
+        ->and($content)->toContain('GOOGLE_DRIVE_FOLDER_ID=folder-1');
+
+    @unlink($path);
 });
 
 it('Drive OAuth redirect warns when credentials are missing', function () {

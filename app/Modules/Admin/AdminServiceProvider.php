@@ -10,6 +10,7 @@ use App\Modules\Admin\Http\Controllers\PermissionMatrixController;
 use App\Modules\Admin\Http\Controllers\QuickLinkAdminController;
 use App\Modules\Admin\Http\Controllers\UserAdminController;
 use App\Modules\Admin\Livewire\DepartmentManager;
+use App\Modules\Admin\Livewire\DriveCredentialsForm;
 use App\Modules\Admin\Livewire\PermissionMatrix;
 use App\Modules\Admin\Livewire\QuickLinkManager;
 use App\Modules\Admin\Livewire\SiteSettingsForm;
@@ -47,6 +48,7 @@ class AdminServiceProvider extends ServiceProvider
         Livewire::component('admin.permission-matrix', PermissionMatrix::class);
         Livewire::component('admin.quick-link-manager', QuickLinkManager::class);
         Livewire::component('admin.site-settings', SiteSettingsForm::class);
+        Livewire::component('admin.drive-credentials', DriveCredentialsForm::class);
 
         // Existing installs: ensure Admin role receives newly registered permissions.
         try {

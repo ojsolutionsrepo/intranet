@@ -20,7 +20,6 @@ class IntegrationHealthController extends Controller
             'drive' => $drive,
             'driveConfigured' => $drive->configured(),
             'driveEnabled' => (bool) config('integrations.drive.enabled'),
-            'driveCallbackUrl' => route('drive.oauth.callback'),
             'driveFolderId' => config('integrations.drive.folder_id'),
             'driveConnection' => DriveConnection::query()->where('status', 'active')->latest('id')->first(),
         ]);

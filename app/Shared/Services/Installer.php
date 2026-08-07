@@ -404,15 +404,20 @@ final class Installer
     /**
      * @param  array<string, string|null>  $values
      */
-    public function writeEnv(array $values): void
+    public function writeEnv(array $values, ?string $path = null): void
     {
-        if (app()->environment('testing')) {
+        if (app()->environment('testing') && $path === null) {
             return;
         }
 
-        $path = base_path('.env');
+        $path ??= base_path('.env');
         if (! File::exists($path)) {
-            File::copy(base_path('.env.example'), $path);
+            $example = base_path('.env.example');
+            if (File::exists($example)) {
+                File::copy($example, $path);
+            } else {
+                File::put($path, '');
+            }
         }
 
         $content = File::get($path);
