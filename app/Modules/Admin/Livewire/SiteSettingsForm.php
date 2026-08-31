@@ -54,7 +54,7 @@ class SiteSettingsForm extends Component
             'session_idle_timeout' => 'required|integer|min:5|max:1440',
             'privacy_contact' => 'required|email|max:180',
             'brand_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'logo' => ['nullable', 'image', 'max:2048'],
+            'logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
             'favicon' => ['nullable', 'file', 'mimes:ico,png,jpg,jpeg,gif,svg,webp', 'max:512'],
         ]);
 
@@ -72,14 +72,20 @@ class SiteSettingsForm extends Component
         $settings->set('privacy_contact', $this->privacy_contact, 'gdpr');
         $settings->set('brand_color', strtolower($this->brand_color), 'branding');
 
-        if ($this->logo) {
-            $branding->storeLogo($this->logo);
-            $this->logo = null;
-        }
+        try {
+            if ($this->logo) {
+                $branding->storeLogo($this->logo);
+                $this->logo = null;
+            }
 
-        if ($this->favicon) {
-            $branding->storeFavicon($this->favicon);
-            $this->favicon = null;
+            if ($this->favicon) {
+                $branding->storeFavicon($this->favicon);
+                $this->favicon = null;
+            }
+        } catch (\Throwable $e) {
+            $this->addError('logo', $e->getMessage());
+
+            return;
         }
 
         $this->logoUrl = $branding->logoUrl();

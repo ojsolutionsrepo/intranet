@@ -71,6 +71,16 @@ class CoreServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        foreach ([
+            storage_path('app/livewire-tmp'),
+            storage_path('app/private/livewire-tmp'),
+            storage_path('app/public/branding'),
+        ] as $dir) {
+            if (! is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+        }
+
         try {
             $this->app->make(Settings::class)->applyToConfig();
         } catch (\Throwable) {

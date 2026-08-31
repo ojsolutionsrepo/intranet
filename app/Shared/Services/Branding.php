@@ -50,7 +50,12 @@ final class Branding
     {
         $this->deleteStored($this->logoPath());
         $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
-        $path = $file->storeAs('branding', 'logo.'.$ext, 'public');
+        if ($ext === '' || strlen($ext) > 5) {
+            $ext = 'png';
+        }
+
+        $path = $this->storePublicUpload($file, 'branding/logo.'.$ext);
+
         $this->settings->set('site_logo', $path, 'branding');
 
         return $path;
@@ -60,7 +65,12 @@ final class Branding
     {
         $this->deleteStored($this->faviconPath());
         $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
-        $path = $file->storeAs('branding', 'favicon.'.$ext, 'public');
+        if ($ext === '' || strlen($ext) > 5) {
+            $ext = 'png';
+        }
+
+        $path = $this->storePublicUpload($file, 'branding/favicon.'.$ext);
+
         $this->settings->set('site_favicon', $path, 'branding');
 
         return $path;
@@ -79,16 +89,15 @@ final class Branding
     }
 
     /**
-     * CSS custom properties for the accent (signal) scale.
+     * CSS custom properties for a given accent (used for live admin preview).
      */
-    public function accentCss(): string
+    public function accentCssFor(string $hex): string
     {
-        $base = $this->accentColor();
+        $base = $this->isValidHex($hex) ? strtolower($hex) : self::DEFAULT_ACCENT;
         $dark = $this->adjustBrightness($base, -0.18);
         $light = $this->adjustBrightness($base, 0.22);
         $soft = $this->hexToRgba($base, 0.2);
 
-        // !important beats theme stylesheets that redefine the same tokens later/earlier.
         return implode('', [
             "--sig-600: {$dark} !important;",
             "--sig-500: {$base} !important;",
@@ -98,6 +107,14 @@ final class Branding
             "--signal-glow-soft: 0 0 24px {$this->hexToRgba($base, 0.18)} !important;",
             "--atmosphere-3: {$this->hexToRgba($base, 0.12)} !important;",
         ]);
+    }
+
+    /**
+     * CSS custom properties for the accent (signal) scale.
+     */
+    public function accentCss(): string
+    {
+        return $this->accentCssFor($this->accentColor());
     }
 
     /**
@@ -138,7 +155,8 @@ final class Branding
             return null;
         }
 
-        return $this->publicDisk()->url($path);
+        // Cache-bust so browsers pick up replaced logo/favicon files with the same name.
+        return $this->publicDisk()->url($path).'?v='.$this->publicDisk()->lastModified($path);
     }
 
     private function deleteStored(?string $path): void
@@ -146,6 +164,36 @@ final class Branding
         if ($path && $this->publicDisk()->exists($path)) {
             $this->publicDisk()->delete($path);
         }
+    }
+
+    /**
+     * Persist an upload to the public disk, throwing if the write fails
+     * (the public disk has throw=false by default, which silently drops logos).
+     */
+    private function storePublicUpload(UploadedFile $file, string $path): string
+    {
+        $disk = $this->publicDisk();
+        $disk->makeDirectory(dirname($path));
+
+        $real = $file->getRealPath();
+        if (! is_string($real) || $real === '' || ! is_readable($real)) {
+            throw new \RuntimeException('Uploaded file is missing or unreadable. Try selecting it again.');
+        }
+
+        $contents = file_get_contents($real);
+        if ($contents === false || $contents === '') {
+            throw new \RuntimeException('Uploaded file is empty. Try selecting it again.');
+        }
+
+        if (! $disk->put($path, $contents)) {
+            throw new \RuntimeException('Could not write branding file to public storage.');
+        }
+
+        if (! $disk->exists($path)) {
+            throw new \RuntimeException('Branding file was not found after write.');
+        }
+
+        return $path;
     }
 
     private function adjustBrightness(string $hex, float $percent): string

@@ -457,7 +457,7 @@ html[data-theme="light"] {
   }
   .sidebar-link:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
   .sidebar-link.is-active {
-    background: rgba(217, 123, 34, 0.16);
+    background: var(--sig-100);
     color: #fff;
     box-shadow: inset 3px 0 0 var(--sig-500), var(--signal-glow-soft);
   }
@@ -700,7 +700,7 @@ html[data-theme="light"] {
     padding: 8px;
   }
   html[data-sidebar="collapsed"] .sidebar-link.is-active .sidebar-link-icon {
-    background: #d97b22;
+    background: var(--sig-500);
     color: #0e1a2b;
   }
 
