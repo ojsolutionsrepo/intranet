@@ -71,7 +71,11 @@ class CoreServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        try {
+            $this->app->make(Settings::class)->applyToConfig();
+        } catch (\Throwable) {
+            // Settings table may not exist yet during install/migrate.
+        }
     }
 
     private function registerIntegrations(): void

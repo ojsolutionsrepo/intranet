@@ -10,7 +10,7 @@
         <div>
             <label class="block text-[12.5px] font-semibold mb-1.5" for="drive-client-secret">Client secret</label>
             <input id="drive-client-secret" type="password" class="input font-mono text-sm" wire:model="client_secret"
-                   placeholder="GOCSPX-…" autocomplete="new-password">
+                   placeholder="GOCSPX-…" autocomplete="off">
             @error('client_secret') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
         </div>
 
@@ -24,7 +24,7 @@
         </div>
 
         <label class="flex items-start gap-2.5 cursor-pointer">
-            <input type="checkbox" class="mt-0.5" wire:model="enabled">
+            <input type="checkbox" class="mt-0.5" wire:model.live="enabled">
             <span>
                 <span class="block text-[12.5px] font-semibold">Enable Drive broker</span>
                 <span class="note text-xs">Writes <span class="font-mono">DRIVE_BROKER_ENABLED=true</span> to <span class="font-mono">.env</span></span>

@@ -6,7 +6,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'OJ Intranet'))</title>
     <x-theme-boot />
-    <x-branding />
     <script>
         (function () {
             try {
@@ -26,6 +25,8 @@
     @else
         <link rel="stylesheet" href="{{ asset('css/oj.css') }}">
     @endif
+    {{-- After stylesheets so admin brand colour overrides :root tokens --}}
+    <x-branding />
     @livewireStyles
 </head>
 <body>

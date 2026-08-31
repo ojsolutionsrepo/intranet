@@ -14,7 +14,11 @@ final class Settings
     {
         $all = $this->all();
 
-        return data_get($all, $key, $default);
+        if (! array_key_exists($key, $all) || $all[$key] === null) {
+            return $default;
+        }
+
+        return $all[$key];
     }
 
     public function set(string $key, mixed $value, string $group = 'general'): void
@@ -34,6 +38,24 @@ final class Settings
         );
 
         Cache::forget(self::CACHE_KEY);
+        $this->applyToConfig();
+    }
+
+    /**
+     * Push persisted settings into runtime config so consumers of config()
+     * (privacy notice, mail footers, page titles) see admin changes immediately.
+     */
+    public function applyToConfig(): void
+    {
+        $siteName = $this->get('site_name');
+        if (is_string($siteName) && $siteName !== '') {
+            config(['app.name' => $siteName]);
+        }
+
+        $privacy = $this->get('privacy_contact');
+        if (is_string($privacy) && $privacy !== '') {
+            config(['gdpr.privacy_contact' => $privacy]);
+        }
     }
 
     /**
@@ -48,8 +70,19 @@ final class Settings
         return Cache::remember(self::CACHE_KEY, 300, function () {
             return DB::table('settings')
                 ->get()
-                ->mapWithKeys(fn ($row) => [$row->key => json_decode($row->value, true)])
+                ->mapWithKeys(fn ($row) => [$row->key => $this->decode($row->value)])
                 ->all();
         });
+    }
+
+    private function decode(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $decoded = json_decode($value, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
     }
 }

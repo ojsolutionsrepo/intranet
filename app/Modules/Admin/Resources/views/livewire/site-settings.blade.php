@@ -1,4 +1,8 @@
 <div>
+    @if (session('status'))
+        <p class="badge badge-ok mb-4">{{ session('status') }}</p>
+    @endif
+
     <form wire:submit="save" class="space-y-5">
         <div>
             <label class="block text-[12.5px] font-semibold mb-1.5">Site name</label>

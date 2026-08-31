@@ -59,7 +59,7 @@ final class DocumentService
                 'review_at' => $data['review_at'] ?? null,
             ]);
 
-            $version = DocumentVersion::query()->create([
+            $version = $this->createVersion([
                 'document_id' => $document->id,
                 'version_number' => 1,
                 'storage_ref' => $stored['ref'],
@@ -107,7 +107,7 @@ final class DocumentService
 
         $next = (int) $document->versions()->max('version_number') + 1;
 
-        $version = DocumentVersion::query()->create([
+        $version = $this->createVersion([
             'document_id' => $document->id,
             'version_number' => $next,
             'storage_ref' => $stored['ref'],
@@ -145,7 +145,7 @@ final class DocumentService
 
         $next = (int) $document->versions()->max('version_number') + 1;
 
-        $version = DocumentVersion::query()->create([
+        $version = $this->createVersion([
             'document_id' => $document->id,
             'version_number' => $next,
             'storage_ref' => $stored['ref'],
@@ -154,7 +154,7 @@ final class DocumentService
             'mime' => $old->mime,
             'size' => $stored['size'],
             'checksum_sha256' => $old->checksum_sha256,
-            'extracted_text' => $old->extracted_text,
+            'extracted_text' => $this->sanitizeExtractedText($old->extracted_text),
             'changelog' => "Restored from v{$old->version_number}",
             'uploaded_by' => $actor->id,
         ]);
@@ -269,28 +269,61 @@ final class DocumentService
         }
     }
 
+    /**
+     * Persist a version row; if extracted_text still trips MySQL charset checks,
+     * retry once with null so the upload itself never fails on search indexing.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function createVersion(array $attributes): DocumentVersion
+    {
+        try {
+            return DocumentVersion::query()->create($attributes);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (! array_key_exists('extracted_text', $attributes) || $attributes['extracted_text'] === null) {
+                throw $e;
+            }
+
+            // MySQL often reports charset errors as SQLSTATE 22007 / 1366.
+            $message = $e->getMessage();
+            $isCharsetError = str_contains($message, 'extracted_text')
+                || str_contains($message, 'Incorrect string value')
+                || str_contains($message, 'SQLSTATE[22007]')
+                || str_contains($message, '1366');
+
+            if (! $isCharsetError) {
+                throw $e;
+            }
+
+            $attributes['extracted_text'] = null;
+
+            return DocumentVersion::query()->create($attributes);
+        }
+    }
+
     private function extractText(string $contents, string $extension): ?string
     {
         $ext = strtolower($extension);
 
         if (in_array($ext, ['txt', 'csv', 'md'], true)) {
-            return mb_substr($contents, 0, 500000);
+            return $this->sanitizeExtractedText(mb_substr($contents, 0, 500000));
         }
 
         if ($ext === 'pdf') {
-            // Lightweight extractor: pull readable ASCII/UTF-8 streams from PDF.
+            // Only match printable ASCII PDF string literals. Broader patterns pull
+            // compressed/binary streams from Google Docs PDFs and MySQL utf8mb4 rejects them.
             $text = '';
-            if (preg_match_all('/\((\\\\.|[^\\\\)]){1,200}\)/s', $contents, $matches)) {
-                foreach ($matches[0] as $match) {
-                    $chunk = trim($match, '()');
+            if (preg_match_all('/\(([\x20-\x7E]{3,200})\)/', $contents, $matches)) {
+                foreach ($matches[1] as $chunk) {
                     $chunk = stripcslashes($chunk);
-                    if (preg_match('/[A-Za-z0-9]{3,}/', $chunk)) {
+                    $chunk = trim($chunk);
+                    if ($chunk !== '' && preg_match('/[A-Za-z0-9]{3,}/', $chunk)) {
                         $text .= $chunk.' ';
                     }
                 }
             }
 
-            return $text !== '' ? mb_substr($text, 0, 500000) : null;
+            return $this->sanitizeExtractedText($text);
         }
 
         // DOCX/XLSX are zip+xml — pull XML text nodes if ZipArchive available.
@@ -308,13 +341,41 @@ final class DocumentService
                 }
                 $zip->close();
                 @unlink($tmp);
-                $text = trim(html_entity_decode(strip_tags($xml)));
+                $text = trim(html_entity_decode(strip_tags($xml), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
-                return $text !== '' ? mb_substr($text, 0, 500000) : null;
+                return $this->sanitizeExtractedText($text);
             }
             @unlink($tmp);
         }
 
         return null;
+    }
+
+    /**
+     * Ensure extracted body text is safe for MySQL utf8mb4 columns.
+     */
+    private function sanitizeExtractedText(?string $text): ?string
+    {
+        if ($text === null || $text === '') {
+            return null;
+        }
+
+        // Drop invalid UTF-8 bytes first (iconv is stricter than mb_* here).
+        $clean = @iconv('UTF-8', 'UTF-8//IGNORE', $text);
+        if (! is_string($clean) || $clean === '') {
+            // Last resort: keep ASCII printable only.
+            $clean = preg_replace('/[^\x09\x0A\x0D\x20-\x7E]/', '', $text) ?? '';
+        }
+
+        // Strip control chars (keep tab/newline) then normalize whitespace.
+        $clean = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $clean) ?? '';
+        $clean = preg_replace('/\s+/', ' ', $clean) ?? '';
+        $clean = trim($clean);
+
+        if ($clean === '' || ! mb_check_encoding($clean, 'UTF-8')) {
+            return null;
+        }
+
+        return mb_substr($clean, 0, 500000);
     }
 }

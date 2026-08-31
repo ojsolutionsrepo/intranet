@@ -88,14 +88,15 @@ final class Branding
         $light = $this->adjustBrightness($base, 0.22);
         $soft = $this->hexToRgba($base, 0.2);
 
+        // !important beats theme stylesheets that redefine the same tokens later/earlier.
         return implode('', [
-            "--sig-600: {$dark};",
-            "--sig-500: {$base};",
-            "--sig-400: {$light};",
-            "--sig-100: {$soft};",
-            "--signal-glow: 0 0 14px {$this->hexToRgba($base, 0.55)}, 0 0 36px {$this->hexToRgba($base, 0.28)};",
-            "--signal-glow-soft: 0 0 24px {$this->hexToRgba($base, 0.18)};",
-            "--atmosphere-3: {$this->hexToRgba($base, 0.12)};",
+            "--sig-600: {$dark} !important;",
+            "--sig-500: {$base} !important;",
+            "--sig-400: {$light} !important;",
+            "--sig-100: {$soft} !important;",
+            "--signal-glow: 0 0 14px {$this->hexToRgba($base, 0.55)}, 0 0 36px {$this->hexToRgba($base, 0.28)} !important;",
+            "--signal-glow-soft: 0 0 24px {$this->hexToRgba($base, 0.18)} !important;",
+            "--atmosphere-3: {$this->hexToRgba($base, 0.12)} !important;",
         ]);
     }
 
@@ -105,9 +106,17 @@ final class Branding
      */
     public function accentStyleTag(): string
     {
-        return '<style>:root, html[data-theme="dark"], html[data-theme="light"], html[data-theme="system"] {'
-            .$this->accentCss()
-            .'}</style>';
+        // Match app.css theme selectors (incl. system+resolved) so overrides win on specificity.
+        $selector = implode(', ', [
+            ':root',
+            'html[data-theme="dark"]',
+            'html[data-theme="light"]',
+            'html[data-theme="system"]',
+            'html[data-theme="system"][data-theme-resolved="dark"]',
+            'html[data-theme="system"][data-theme-resolved="light"]',
+        ]);
+
+        return '<style id="oj-brand-accent">'.$selector.'{'.$this->accentCss().'}</style>';
     }
 
     public function isValidHex(string $color): bool

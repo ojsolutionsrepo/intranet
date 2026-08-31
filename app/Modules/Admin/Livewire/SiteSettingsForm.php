@@ -31,12 +31,20 @@ class SiteSettingsForm extends Component
 
     public function mount(Settings $settings, Branding $branding): void
     {
-        $this->site_name = (string) $settings->get('site_name', config('app.name'));
+        $this->site_name = (string) $settings->get('site_name', config('app.name', 'OJ Intranet'));
         $this->session_idle_timeout = (int) $settings->get('session_idle_timeout', 480);
         $this->privacy_contact = (string) $settings->get('privacy_contact', config('gdpr.privacy_contact'));
         $this->brand_color = $branding->accentColor();
         $this->logoUrl = $branding->logoUrl();
         $this->faviconUrl = $branding->faviconUrl();
+
+        // Guard against empty required fields (e.g. null stored values) so Save is not a no-op.
+        if ($this->privacy_contact === '') {
+            $this->privacy_contact = (string) config('gdpr.privacy_contact', 'privacy@oj.local');
+        }
+        if ($this->session_idle_timeout < 5) {
+            $this->session_idle_timeout = 480;
+        }
     }
 
     public function save(Settings $settings, Branding $branding, AuditLogger $audit): void
@@ -87,6 +95,8 @@ class SiteSettingsForm extends Component
         ]);
 
         session()->flash('status', 'Site settings saved.');
+        // Full redirect so layout (sidebar name, logo, accent CSS) reloads with new values.
+        $this->redirect(route('admin.settings'), navigate: false);
     }
 
     public function removeLogo(Branding $branding, AuditLogger $audit): void
@@ -96,6 +106,7 @@ class SiteSettingsForm extends Component
         $this->logoUrl = null;
         $audit->log('settings.logo_removed', null, $before, ['site_logo' => null]);
         session()->flash('status', 'Site logo removed.');
+        $this->redirect(route('admin.settings'), navigate: false);
     }
 
     public function removeFavicon(Branding $branding, AuditLogger $audit): void
@@ -105,6 +116,7 @@ class SiteSettingsForm extends Component
         $this->faviconUrl = null;
         $audit->log('settings.favicon_removed', null, $before, ['site_favicon' => null]);
         session()->flash('status', 'Favicon removed.');
+        $this->redirect(route('admin.settings'), navigate: false);
     }
 
     public function render()

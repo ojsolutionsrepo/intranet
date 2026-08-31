@@ -124,7 +124,8 @@ it('admin can update site settings', function () {
         ->set('logo', Illuminate\Http\UploadedFile::fake()->image('logo.png', 120, 40))
         ->set('favicon', Illuminate\Http\UploadedFile::fake()->image('favicon.png', 32, 32))
         ->call('save')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertRedirect(route('admin.settings'));
 
     $settings = app(Settings::class);
     expect($settings->get('site_name'))->toBe('OJ Portal')

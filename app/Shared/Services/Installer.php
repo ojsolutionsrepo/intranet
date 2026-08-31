@@ -435,6 +435,17 @@ final class Installer
         }
 
         File::put($path, $content);
+
+        // Keep the current PHP process in sync so the next redirect in this
+        // request (and long-lived workers) see the new values immediately.
+        if ($path === base_path('.env')) {
+            foreach ($values as $key => $value) {
+                $value ??= '';
+                $_ENV[$key] = $value;
+                $_SERVER[$key] = $value;
+                putenv($key.'='.$value);
+            }
+        }
     }
 
     public function setAppUrlFromRequest(string $url): void

@@ -62,12 +62,18 @@ class DriveCredentialsForm extends Component
             'GOOGLE_DRIVE_FOLDER_ID' => filled(config('integrations.drive.folder_id')),
         ];
 
-        $installer->writeEnv([
-            'DRIVE_BROKER_ENABLED' => $this->enabled ? 'true' : 'false',
-            'GOOGLE_DRIVE_CLIENT_ID' => $clientId,
-            'GOOGLE_DRIVE_CLIENT_SECRET' => $clientSecret,
-            'GOOGLE_DRIVE_FOLDER_ID' => $folderId,
-        ]);
+        try {
+            $installer->writeEnv([
+                'DRIVE_BROKER_ENABLED' => $this->enabled ? 'true' : 'false',
+                'GOOGLE_DRIVE_CLIENT_ID' => $clientId,
+                'GOOGLE_DRIVE_CLIENT_SECRET' => $clientSecret,
+                'GOOGLE_DRIVE_FOLDER_ID' => $folderId,
+            ]);
+        } catch (\Throwable $e) {
+            $this->addError('client_id', 'Could not write .env: '.$e->getMessage());
+
+            return;
+        }
 
         config([
             'integrations.drive.enabled' => $this->enabled,
@@ -92,7 +98,8 @@ class DriveCredentialsForm extends Component
                 : 'Drive credentials saved to .env.'
         );
 
-        $this->redirect(route('admin.integrations'), navigate: true);
+        // Full page load so Integration health re-reads .env-backed config.
+        $this->redirect(route('admin.integrations'), navigate: false);
     }
 
     public function render()

@@ -6,12 +6,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Sign in') — {{ config('app.name', 'OJ Intranet') }}</title>
     <x-theme-boot />
-    <x-branding />
     @if (file_exists(public_path('build/manifest.json')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
         <link rel="stylesheet" href="{{ asset('css/oj.css') }}">
     @endif
+    {{-- After stylesheets so admin brand colour overrides :root tokens --}}
+    <x-branding />
 </head>
 <body class="min-h-screen flex items-center justify-center p-6" style="background: var(--paper-1)">
 @php

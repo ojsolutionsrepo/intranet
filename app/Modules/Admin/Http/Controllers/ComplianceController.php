@@ -5,6 +5,7 @@ namespace App\Modules\Admin\Http\Controllers;
 use App\Models\User;
 use App\Shared\Services\AuditExporter;
 use App\Shared\Services\AuditLogger;
+use App\Shared\Services\Settings;
 use App\Shared\Services\SubjectAccessExporter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -18,7 +19,7 @@ class ComplianceController extends Controller
     public function privacy(): View
     {
         return view('admin-module::privacy', [
-            'contact' => config('gdpr.privacy_contact'),
+            'contact' => app(Settings::class)->get('privacy_contact', config('gdpr.privacy_contact')),
             'retention' => config('gdpr.retention_days'),
         ]);
     }
