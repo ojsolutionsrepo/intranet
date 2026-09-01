@@ -68,6 +68,8 @@ html[data-theme="system"][data-theme-resolved="dark"] {
   --glass-panel-bg: rgba(20, 28, 40, 0.42);
   --glass-panel-border: rgba(255, 255, 255, 0.1);
   --glass-panel-blur: 18px;
+  --card-highlight: rgba(255, 255, 255, 0.06);
+  --scrim: rgba(14, 26, 43, 0.45);
   --signal-glow: 0 0 14px rgba(217, 123, 34, 0.55), 0 0 36px rgba(217, 123, 34, 0.28);
   --signal-glow-soft: 0 0 24px rgba(217, 123, 34, 0.18);
   --ok-glow: 0 0 12px rgba(62, 207, 106, 0.45);
@@ -136,6 +138,8 @@ html[data-theme="system"][data-theme-resolved="light"] {
   --glass-panel-bg: rgba(255, 255, 255, 0.72);
   --glass-panel-border: rgba(255, 255, 255, 0.85);
   --glass-panel-blur: 14px;
+  --card-highlight: rgba(14, 26, 43, 0.04);
+  --scrim: rgba(14, 26, 43, 0.4);
   --signal-glow: 0 0 14px rgba(217, 123, 34, 0.35);
   --signal-glow-soft: 0 0 18px rgba(217, 123, 34, 0.12);
   --ok-glow: none;
@@ -187,6 +191,8 @@ html[data-theme="system"][data-theme-resolved="light"] {
     --glass-panel-bg: rgba(255, 255, 255, 0.72);
     --glass-panel-border: rgba(255, 255, 255, 0.85);
     --glass-panel-blur: 14px;
+    --card-highlight: rgba(14, 26, 43, 0.04);
+    --scrim: rgba(14, 26, 43, 0.4);
     --signal-glow: 0 0 14px rgba(217, 123, 34, 0.35);
     --signal-glow-soft: 0 0 18px rgba(217, 123, 34, 0.12);
     --ok-glow: none;
@@ -277,7 +283,7 @@ html[data-theme="system"][data-theme-resolved="light"] {
   }
   .btn-primary {
     background: var(--sig-500);
-    color: #fff;
+    color: var(--sig-on, #fff);
     box-shadow: var(--signal-glow);
   }
   .btn-primary:hover { background: var(--sig-600); }
@@ -337,7 +343,7 @@ html[data-theme="system"][data-theme-resolved="light"] {
     background: var(--glass-panel-bg);
     border: 1px solid var(--glass-panel-border);
     border-radius: var(--r-lg);
-    box-shadow: var(--shadow-2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    box-shadow: var(--shadow-2), inset 0 1px 0 var(--card-highlight, rgba(255, 255, 255, 0.06));
     backdrop-filter: blur(var(--glass-panel-blur)) saturate(var(--glass-saturate, 1.2));
     -webkit-backdrop-filter: blur(var(--glass-panel-blur)) saturate(var(--glass-saturate, 1.2));
   }

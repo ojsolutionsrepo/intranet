@@ -4,9 +4,11 @@
     try {
         var key = 'oj-theme';
         var schemeKey = 'oj-theme-scheme';
-        // Force dark glass canvas (v2). Light remains available via theme toggle after.
+        // One-time glass-dark-v2 marker; keep an existing user choice if present.
         if (localStorage.getItem(schemeKey) !== 'glass-dark-v2') {
-            localStorage.setItem(key, 'dark');
+            if (!localStorage.getItem(key)) {
+                localStorage.setItem(key, 'dark');
+            }
             localStorage.setItem(schemeKey, 'glass-dark-v2');
         }
         var stored = localStorage.getItem(key) || 'dark';

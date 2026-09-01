@@ -5,7 +5,7 @@
     @keydown.escape.window="$wire.closeBox()"
 >
     @if ($open)
-        <div class="fixed inset-0 z-50 bg-black/40 flex items-start justify-center pt-[12vh] px-4" wire:click="closeBox">
+        <div class="fixed inset-0 z-50 bg-[var(--scrim,rgba(14,26,43,0.45))] flex items-start justify-center pt-[12vh] px-4" wire:click="closeBox">
             <div class="card w-full max-w-xl p-0 overflow-hidden" @click.stop>
                 <div class="p-3 border-b border-[var(--line)]">
                     <input

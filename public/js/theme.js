@@ -5,7 +5,9 @@
 
     function migrateScheme() {
         if (localStorage.getItem(SCHEME_KEY) !== 'glass-dark-v2') {
-            localStorage.setItem(KEY, 'dark');
+            if (!localStorage.getItem(KEY)) {
+                localStorage.setItem(KEY, 'dark');
+            }
             localStorage.setItem(SCHEME_KEY, 'glass-dark-v2');
         }
     }

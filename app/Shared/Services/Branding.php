@@ -99,8 +99,20 @@ final class Branding
         $base = $this->readableAccent($base, $surface);
         $dark = $this->adjustBrightness($base, -0.18);
         $light = $this->adjustBrightness($base, 0.22);
-        $soft = $this->hexToRgba($base, $surface === 'dark' ? 0.22 : 0.2);
         $on = $this->relativeLuminance($base) < 0.45 ? '#f2f6fa' : '#0e1a2b';
+
+        // Light surfaces prefer a soft solid tint (not translucent wash) and no atmosphere tint.
+        if ($surface === 'light') {
+            $soft = $this->mixWithWhite($base, 0.88);
+            $glow = "0 0 14px {$this->hexToRgba($base, 0.35)}";
+            $glowSoft = "0 0 18px {$this->hexToRgba($base, 0.12)}";
+            $atmosphere = 'transparent';
+        } else {
+            $soft = $this->hexToRgba($base, 0.22);
+            $glow = "0 0 14px {$this->hexToRgba($base, 0.55)}, 0 0 36px {$this->hexToRgba($base, 0.28)}";
+            $glowSoft = "0 0 24px {$this->hexToRgba($base, 0.18)}";
+            $atmosphere = $this->hexToRgba($base, 0.12);
+        }
 
         return implode('', [
             "--sig-600: {$dark} !important;",
@@ -108,9 +120,9 @@ final class Branding
             "--sig-400: {$light} !important;",
             "--sig-100: {$soft} !important;",
             "--sig-on: {$on} !important;",
-            "--signal-glow: 0 0 14px {$this->hexToRgba($base, 0.55)}, 0 0 36px {$this->hexToRgba($base, 0.28)} !important;",
-            "--signal-glow-soft: 0 0 24px {$this->hexToRgba($base, 0.18)} !important;",
-            "--atmosphere-3: {$this->hexToRgba($base, 0.12)} !important;",
+            "--signal-glow: {$glow} !important;",
+            "--signal-glow-soft: {$glowSoft} !important;",
+            "--atmosphere-3: {$atmosphere} !important;",
         ]);
     }
 
@@ -133,8 +145,9 @@ final class Branding
         $dark = $this->accentCssFor($hex, 'dark');
 
         // Dark first, then light — light selectors must win over :root when theme is light.
+        // Do not target bare html[data-theme=system] (resolved attribute decides light vs dark).
         return '<style id="oj-brand-accent">'
-            .':root,html[data-theme="dark"],html[data-theme="system"],html[data-theme="system"][data-theme-resolved="dark"]{'.$dark.'}'
+            .':root,html[data-theme="dark"],html[data-theme="system"][data-theme-resolved="dark"]{'.$dark.'}'
             .'html[data-theme="light"],html[data-theme="system"][data-theme-resolved="light"]{'.$light.'}'
             .'</style>';
     }
@@ -259,6 +272,20 @@ final class Branding
         $r = (int) max(0, min(255, $r + (255 * $percent)));
         $g = (int) max(0, min(255, $g + (255 * $percent)));
         $b = (int) max(0, min(255, $b + (255 * $percent)));
+
+        return sprintf('#%02x%02x%02x', $r, $g, $b);
+    }
+
+    /**
+     * Mix accent toward white for soft light-theme fills (e.g. --sig-100).
+     */
+    private function mixWithWhite(string $hex, float $whiteAmount): string
+    {
+        $hex = ltrim($hex, '#');
+        $amount = max(0.0, min(1.0, $whiteAmount));
+        $r = (int) round(hexdec(substr($hex, 0, 2)) * (1 - $amount) + 255 * $amount);
+        $g = (int) round(hexdec(substr($hex, 2, 2)) * (1 - $amount) + 255 * $amount);
+        $b = (int) round(hexdec(substr($hex, 4, 2)) * (1 - $amount) + 255 * $amount);
 
         return sprintf('#%02x%02x%02x', $r, $g, $b);
     }

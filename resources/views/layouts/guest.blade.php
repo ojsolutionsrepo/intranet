@@ -27,7 +27,7 @@
             @if ($logoUrl)
                 <img src="{{ $logoUrl }}" alt="{{ $siteName }}" class="h-10 max-w-[120px] object-contain">
             @else
-                <div class="w-10 h-10 rounded-md bg-signal-500 text-oj-900 font-display font-bold grid place-items-center" style="background: var(--sig-500)">OJ</div>
+                <div class="w-10 h-10 rounded-md bg-signal-500 text-signal-on font-display font-bold grid place-items-center" style="background: var(--sig-500); color: var(--sig-on)">OJ</div>
             @endif
             <div>
                 <div class="font-display font-semibold text-lg">{{ $siteName }}</div>

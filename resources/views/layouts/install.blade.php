@@ -27,7 +27,7 @@
 <div class="install-wrap">
     <div class="flex items-center justify-between gap-3 mb-6">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-md bg-signal-500 text-oj-900 font-display font-bold grid place-items-center">OJ</div>
+            <div class="w-10 h-10 rounded-md bg-signal-500 text-signal-on font-display font-bold grid place-items-center">OJ</div>
             <div>
                 <div class="font-display font-semibold text-lg">OJ Intranet setup</div>
                 <div class="font-mono text-[11px] text-[var(--ink-500)]">First-run installer</div>
