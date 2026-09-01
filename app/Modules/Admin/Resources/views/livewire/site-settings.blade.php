@@ -3,20 +3,6 @@
         <p class="badge badge-ok mb-4">{{ session('status') }}</p>
     @endif
 
-    {{-- Live accent preview while editing (overrides shell tokens until Save + redirect). --}}
-    @if (preg_match('/^#[0-9A-Fa-f]{6}$/', $brand_color))
-        <style id="oj-brand-accent-preview">
-            :root,
-            html[data-theme="dark"],
-            html[data-theme="light"],
-            html[data-theme="system"],
-            html[data-theme="system"][data-theme-resolved="dark"],
-            html[data-theme="system"][data-theme-resolved="light"] {
-                {!! app(\App\Shared\Services\Branding::class)->accentCssFor($brand_color) !!}
-            }
-        </style>
-    @endif
-
     <form wire:submit="save" class="space-y-5">
         <div>
             <label class="block text-[12.5px] font-semibold mb-1.5">Site name</label>
@@ -26,22 +12,14 @@
 
         <fieldset class="space-y-4 pt-2 border-t border-[var(--line)]">
             <legend class="font-display font-semibold text-sm text-[var(--ink-900)] mb-1">Branding</legend>
-            <p class="note text-xs">Accent colour, logo, and favicon appear across the staff portal (UR-ADM-05).</p>
+            <p class="note text-xs">Accent colour, logo, and favicon appear across the staff portal (UR-ADM-05). Very dark accents are lifted automatically in dark mode for contrast.</p>
 
             <div>
                 <label class="block text-[12.5px] font-semibold mb-1.5">Accent colour</label>
                 <div class="flex flex-wrap items-center gap-3">
                     <input type="color" class="h-10 w-14 rounded-md border border-[var(--line-strong)] bg-transparent cursor-pointer p-1"
-                           wire:model.live="brand_color" aria-label="Accent colour picker">
-                    <input type="text" class="input max-w-[9rem] font-mono text-sm" wire:model.live="brand_color" placeholder="#d97b22" maxlength="7">
-                    <span class="inline-flex items-center gap-2 text-xs note">
-                        <span
-                            class="w-3 h-3 rounded-full inline-block"
-                            style="background: {{ $brand_color }}; box-shadow: 0 0 10px {{ $brand_color }};"
-                        ></span>
-                        Preview
-                    </span>
-                    <span class="btn btn-primary btn-sm pointer-events-none">Sample button</span>
+                           wire:model.blur="brand_color" aria-label="Accent colour picker">
+                    <input type="text" class="input max-w-[9rem] font-mono text-sm" wire:model.blur="brand_color" placeholder="#d97b22" maxlength="7">
                 </div>
                 @error('brand_color') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
             </div>

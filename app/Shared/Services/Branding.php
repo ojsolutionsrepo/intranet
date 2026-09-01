@@ -89,20 +89,25 @@ final class Branding
     }
 
     /**
-     * CSS custom properties for a given accent (used for live admin preview).
+     * CSS custom properties for a given accent.
+     * $surface: light|dark — dark surfaces lift near-black brand colours so
+     * buttons/sidebar marks stay visible (smart theme pairing).
      */
-    public function accentCssFor(string $hex): string
+    public function accentCssFor(string $hex, string $surface = 'light'): string
     {
         $base = $this->isValidHex($hex) ? strtolower($hex) : self::DEFAULT_ACCENT;
+        $base = $this->readableAccent($base, $surface);
         $dark = $this->adjustBrightness($base, -0.18);
         $light = $this->adjustBrightness($base, 0.22);
-        $soft = $this->hexToRgba($base, 0.2);
+        $soft = $this->hexToRgba($base, $surface === 'dark' ? 0.22 : 0.2);
+        $on = $this->relativeLuminance($base) < 0.45 ? '#f2f6fa' : '#0e1a2b';
 
         return implode('', [
             "--sig-600: {$dark} !important;",
             "--sig-500: {$base} !important;",
             "--sig-400: {$light} !important;",
             "--sig-100: {$soft} !important;",
+            "--sig-on: {$on} !important;",
             "--signal-glow: 0 0 14px {$this->hexToRgba($base, 0.55)}, 0 0 36px {$this->hexToRgba($base, 0.28)} !important;",
             "--signal-glow-soft: 0 0 24px {$this->hexToRgba($base, 0.18)} !important;",
             "--atmosphere-3: {$this->hexToRgba($base, 0.12)} !important;",
@@ -114,7 +119,7 @@ final class Branding
      */
     public function accentCss(): string
     {
-        return $this->accentCssFor($this->accentColor());
+        return $this->accentCssFor($this->accentColor(), 'dark');
     }
 
     /**
@@ -123,22 +128,70 @@ final class Branding
      */
     public function accentStyleTag(): string
     {
-        // Match app.css theme selectors (incl. system+resolved) so overrides win on specificity.
-        $selector = implode(', ', [
-            ':root',
-            'html[data-theme="dark"]',
-            'html[data-theme="light"]',
-            'html[data-theme="system"]',
-            'html[data-theme="system"][data-theme-resolved="dark"]',
-            'html[data-theme="system"][data-theme-resolved="light"]',
-        ]);
+        $hex = $this->accentColor();
+        $light = $this->accentCssFor($hex, 'light');
+        $dark = $this->accentCssFor($hex, 'dark');
 
-        return '<style id="oj-brand-accent">'.$selector.'{'.$this->accentCss().'}</style>';
+        // Dark first, then light — light selectors must win over :root when theme is light.
+        return '<style id="oj-brand-accent">'
+            .':root,html[data-theme="dark"],html[data-theme="system"],html[data-theme="system"][data-theme-resolved="dark"]{'.$dark.'}'
+            .'html[data-theme="light"],html[data-theme="system"][data-theme-resolved="light"]{'.$light.'}'
+            .'</style>';
     }
 
     public function isValidHex(string $color): bool
     {
         return (bool) preg_match('/^#[0-9A-Fa-f]{6}$/', $color);
+    }
+
+    /**
+     * Keep brand accents usable: lift very dark colours on dark UI, deepen very
+     * light colours on light UI so contrast is not washed out.
+     */
+    private function readableAccent(string $hex, string $surface): string
+    {
+        $luminance = $this->relativeLuminance($hex);
+
+        if ($surface === 'dark' && $luminance < 0.18) {
+            // Lift toward a mid/bright tint of the same hue.
+            $steps = 0;
+            $lifted = $hex;
+            while ($this->relativeLuminance($lifted) < 0.28 && $steps < 8) {
+                $lifted = $this->adjustBrightness($lifted, 0.14);
+                $steps++;
+            }
+
+            return $lifted;
+        }
+
+        if ($surface === 'light' && $luminance > 0.82) {
+            $steps = 0;
+            $deepened = $hex;
+            while ($this->relativeLuminance($deepened) > 0.55 && $steps < 8) {
+                $deepened = $this->adjustBrightness($deepened, -0.12);
+                $steps++;
+            }
+
+            return $deepened;
+        }
+
+        return $hex;
+    }
+
+    private function relativeLuminance(string $hex): float
+    {
+        $hex = ltrim($hex, '#');
+        $channels = [
+            hexdec(substr($hex, 0, 2)) / 255,
+            hexdec(substr($hex, 2, 2)) / 255,
+            hexdec(substr($hex, 4, 2)) / 255,
+        ];
+
+        $linear = array_map(static function (float $c): float {
+            return $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+        }, $channels);
+
+        return 0.2126 * $linear[0] + 0.7152 * $linear[1] + 0.0722 * $linear[2];
     }
 
     private function publicDisk(): FilesystemAdapter
