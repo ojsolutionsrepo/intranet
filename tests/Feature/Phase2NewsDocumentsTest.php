@@ -55,6 +55,38 @@ it('UR-NEW-03 sanitises XSS from rich HTML', function () {
     expect($post->body_html)->not->toContain('<script>');
 });
 
+it('UR-NEW-03 composer stores rich text and attachments', function () {
+    Storage::fake('public');
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+
+    $image = UploadedFile::fake()->image('banner.png', 120, 80);
+    $doc = UploadedFile::fake()->create('briefing.pdf', 120, 'application/pdf');
+
+    \Livewire\Livewire::actingAs($admin)
+        ->test(\App\Modules\News\Livewire\NewsComposer::class)
+        ->set('title', 'Office reopening')
+        ->set('summary', 'What to expect next week')
+        ->set('body_html', '<p>Please <strong>arrive early</strong>.</p>')
+        ->set('status', 'published')
+        ->set('attachments', [$image, $doc])
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+
+    $post = Post::query()->where('title', 'Office reopening')->firstOrFail();
+    expect($post->body_html)->toContain('<strong>arrive early</strong>')
+        ->and($post->attachments)->toHaveCount(2)
+        ->and($post->attachments->where('is_image', true))->toHaveCount(1);
+
+    actingAs($admin)
+        ->get(route('news.show', $post))
+        ->assertOk()
+        ->assertSee('Please')
+        ->assertSee('arrive early')
+        ->assertSee('Attachments')
+        ->assertSee('briefing.pdf');
+});
+
 it('UR-NEW-04 hides audience-targeted posts from non-members', function () {
     $jasmine = User::query()->where('email', 'jasmine@oj.local')->firstOrFail(); // People
     $staff = User::query()->where('email', 'staff@oj.local')->firstOrFail(); // Engineering

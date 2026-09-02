@@ -210,6 +210,7 @@
 <script src="{{ asset('js/theme.js') }}" defer></script>
 <script src="{{ asset('js/sidebar.js') }}" defer></script>
 <script src="{{ asset('js/profile-menu.js') }}" defer></script>
+<script src="{{ asset('js/rich-editor.js') }}"></script>
 @livewireScripts
 </body>
 </html>

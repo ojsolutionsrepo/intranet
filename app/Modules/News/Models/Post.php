@@ -67,6 +67,11 @@ class Post extends Model
         return $this->hasMany(PostRead::class);
     }
 
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(PostAttachment::class)->orderBy('id');
+    }
+
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_PUBLISHED)

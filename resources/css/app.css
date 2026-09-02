@@ -350,6 +350,75 @@ html[data-theme="system"][data-theme-resolved="light"] {
 
   .note { color: var(--ink-500); font-size: 14px; }
 
+  .rich-editor {
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-md);
+    background: var(--glass-chip-bg);
+    overflow: hidden;
+  }
+  .rich-editor:focus-within {
+    border-color: var(--sig-500);
+    box-shadow: 0 0 0 3px var(--sig-100), var(--signal-glow);
+  }
+  .rich-editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper-2);
+  }
+  .rich-editor-btn {
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-700);
+    background: var(--paper-0);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-sm);
+    padding: 5px 9px;
+    cursor: pointer;
+    line-height: 1.2;
+  }
+  .rich-editor-btn:hover { color: var(--ink-900); border-color: var(--sig-500); }
+  .rich-editor-btn-file { display: inline-flex; align-items: center; cursor: pointer; }
+  .rich-editor-sep {
+    width: 1px;
+    align-self: stretch;
+    background: var(--line-strong);
+    margin: 0 4px;
+  }
+  .rich-editor-surface {
+    min-height: 180px;
+    max-height: 480px;
+    overflow-y: auto;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    outline: none;
+  }
+  .rich-editor-surface:empty:before,
+  .rich-editor-surface[data-placeholder]:empty:before {
+    content: attr(data-placeholder);
+    color: var(--ink-300);
+    pointer-events: none;
+  }
+  .rich-editor-surface:focus { outline: none; box-shadow: none !important; }
+  .rich-editor-surface p { margin: 0 0 0.75em; }
+  .rich-editor-surface h3 { font-size: 1.15rem; font-weight: 700; margin: 0 0 0.5em; }
+  .rich-editor-surface ul { list-style: disc; padding-left: 1.25rem; margin: 0 0 0.75em; }
+  .rich-editor-surface ol { list-style: decimal; padding-left: 1.25rem; margin: 0 0 0.75em; }
+  .rich-editor-surface img,
+  .news-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--r-md);
+    margin: 0.5rem 0;
+  }
+  .news-body a { color: var(--sig-500); text-decoration: underline; }
+  .news-body ul { list-style: disc; padding-left: 1.25rem; }
+  .news-body ol { list-style: decimal; padding-left: 1.25rem; }
+
   .theme-select {
     font-family: var(--font-body);
     font-size: 12.5px;

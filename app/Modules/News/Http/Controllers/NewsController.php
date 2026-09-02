@@ -4,10 +4,13 @@ namespace App\Modules\News\Http\Controllers;
 
 use App\Core\Modules\ModuleRegistry;
 use App\Modules\News\Models\Post;
+use App\Modules\News\Models\PostAttachment;
 use App\Modules\News\Services\NewsService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class NewsController extends Controller
 {
@@ -32,7 +35,20 @@ class NewsController extends Controller
         Gate::authorize('view', $post);
 
         $news->markRead($post, request()->user());
+        $post->load(['author', 'attachments']);
 
         return view('news::show', compact('post'));
+    }
+
+    public function downloadAttachment(ModuleRegistry $registry, Post $post, PostAttachment $attachment): StreamedResponse
+    {
+        abort_unless($registry->isEnabled('news'), 404);
+        abort_unless($attachment->post_id === $post->id, 404);
+        Gate::authorize('view', $post);
+
+        $disk = Storage::disk($attachment->disk);
+        abort_unless($disk->exists($attachment->path), 404);
+
+        return $disk->download($attachment->path, $attachment->original_name);
     }
 }

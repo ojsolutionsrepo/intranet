@@ -4,13 +4,18 @@ namespace App\Modules\News\Services;
 
 use App\Models\User;
 use App\Modules\News\Models\Post;
+use App\Modules\News\Models\PostAttachment;
 use App\Modules\News\Models\PostRead;
+use App\Shared\Contracts\VirusScanner;
 use App\Shared\Services\AudienceResolver;
 use App\Shared\Services\AuditLogger;
 use App\Shared\Services\HtmlSanitizer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 final class NewsService
 {
@@ -18,6 +23,7 @@ final class NewsService
         private readonly HtmlSanitizer $sanitizer,
         private readonly AudienceResolver $audience,
         private readonly AuditLogger $audit,
+        private readonly VirusScanner $virusScanner,
     ) {}
 
     /**
@@ -40,9 +46,78 @@ final class NewsService
             'scheduled_at' => $data['scheduled_at'] ?? null,
         ]);
 
+        if (! empty($data['attachments']) && is_array($data['attachments'])) {
+            foreach ($data['attachments'] as $file) {
+                if ($file instanceof UploadedFile) {
+                    $this->storeAttachment($post, $author, $file);
+                }
+            }
+        }
+
         $this->audit->log('news.created', $post, null, $post->only(['title', 'status', 'audience']));
 
-        return $post;
+        return $post->load('attachments');
+    }
+
+    public function storeInlineImage(User $author, TemporaryUploadedFile|UploadedFile $file): string
+    {
+        $this->assertCleanUpload($file);
+
+        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $path = $file->storeAs(
+            'news/inline/'.$author->id,
+            Str::uuid()->toString().'.'.$ext,
+            'public',
+        );
+
+        if (! is_string($path) || $path === '') {
+            throw new \RuntimeException('Could not store inline image.');
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
+    public function storeAttachment(Post $post, User $author, TemporaryUploadedFile|UploadedFile $file): PostAttachment
+    {
+        $this->assertCleanUpload($file);
+
+        $original = $file->getClientOriginalName();
+        $mime = $file->getMimeType() ?: 'application/octet-stream';
+        $isImage = str_starts_with($mime, 'image/');
+        $ext = strtolower($file->getClientOriginalExtension() ?: ($isImage ? 'jpg' : 'bin'));
+        $path = $file->storeAs(
+            'news/attachments/'.$post->id,
+            Str::uuid()->toString().'.'.$ext,
+            'public',
+        );
+
+        if (! is_string($path) || $path === '') {
+            throw new \RuntimeException('Could not store attachment.');
+        }
+
+        return PostAttachment::query()->create([
+            'post_id' => $post->id,
+            'disk' => 'public',
+            'path' => $path,
+            'original_name' => $original,
+            'mime_type' => $mime,
+            'size' => (int) $file->getSize(),
+            'is_image' => $isImage,
+            'uploaded_by' => $author->id,
+        ]);
+    }
+
+    private function assertCleanUpload(TemporaryUploadedFile|UploadedFile $file): void
+    {
+        $real = $file->getRealPath();
+        if (! is_string($real) || $real === '') {
+            throw new \RuntimeException('Uploaded file is missing.');
+        }
+
+        $scan = $this->virusScanner->scan($real);
+        if (! ($scan['clean'] ?? false)) {
+            throw new \RuntimeException($scan['message'] ?? 'Upload failed virus scan.');
+        }
     }
 
     /**

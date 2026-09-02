@@ -50,6 +50,10 @@ class NewsServiceProvider extends ServiceProvider
                     ->name('news.create')
                     ->middleware('can:news.publish');
 
+                Route::get('/{post:slug}/attachments/{attachment}', [NewsController::class, 'downloadAttachment'])
+                    ->name('news.attachments.download')
+                    ->middleware('can:news.view');
+
                 Route::get('/{post:slug}', [NewsController::class, 'show'])
                     ->name('news.show')
                     ->middleware('can:news.view');
