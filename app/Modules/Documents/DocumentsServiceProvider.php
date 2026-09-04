@@ -11,7 +11,9 @@ use App\Modules\Documents\Livewire\DocumentUpload;
 use App\Modules\Documents\Livewire\PolicyHub;
 use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Policies\DocumentPolicy;
+use App\Modules\Documents\Storage\GoogleDriveStorageDriver;
 use App\Modules\Documents\Storage\LocalStorageDriver;
+use App\Shared\Contracts\DriveBroker;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
@@ -22,7 +24,13 @@ class DocumentsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(DocumentStorageAdapter::class, fn () => new LocalStorageDriver);
+        $this->app->singleton(DocumentStorageAdapter::class, function ($app) {
+            // Always local cache; mirrors to Google Drive when OAuth-connected.
+            return new GoogleDriveStorageDriver(
+                $app->make(DriveBroker::class),
+                new LocalStorageDriver,
+            );
+        });
     }
 
     public function boot(ModuleRegistry $registry): void
@@ -64,6 +72,10 @@ class DocumentsServiceProvider extends ServiceProvider
 
                     Route::post('/upload', [DocumentController::class, 'store'])
                         ->name('documents.store')
+                        ->middleware('can:documents.upload');
+
+                    Route::post('/categories', [DocumentController::class, 'storeCategory'])
+                        ->name('documents.categories.store')
                         ->middleware('can:documents.upload');
 
                     Route::get('/search', [DocumentController::class, 'search'])

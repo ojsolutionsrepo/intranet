@@ -30,7 +30,7 @@
 
     <div class="card p-5 mb-6">
         <h2 class="font-display font-semibold text-lg mb-2">Google Drive</h2>
-        <p class="note mb-4">Connect a Google account with <strong>read, update, and write</strong> access. Document listings still use the intranet ACL; Drive is only used for file I/O and cache fill.</p>
+        <p class="note mb-4">Connect a Google account with <strong>read, update, and write</strong> access. When connected, <strong>document uploads are mirrored to Google Drive</strong> (local cache always kept). Document listings still use the intranet ACL — credentials alone are not enough; you must click Connect.</p>
 
         <ul class="note text-[12.5px] space-y-1.5 mb-4 font-mono">
             <li>

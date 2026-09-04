@@ -8,6 +8,7 @@ use App\Modules\Documents\Models\Document;
 use App\Modules\Documents\Models\DocumentCategory;
 use App\Modules\Documents\Models\DocumentVersion;
 use App\Modules\Documents\Services\DocumentService;
+use App\Shared\Contracts\DriveBroker;
 use App\Shared\Models\Department;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -28,14 +29,40 @@ class DocumentController extends Controller
         return view('documents::index');
     }
 
-    public function upload(ModuleRegistry $registry): View
+    public function upload(ModuleRegistry $registry, DriveBroker $drive): View
     {
         abort_unless($registry->isEnabled('documents'), 404);
 
         return view('documents::upload', [
             'categories' => DocumentCategory::query()->orderBy('order')->orderBy('name')->get(),
             'departments' => Department::query()->orderBy('name')->get(),
+            'driveConnected' => $drive->isConnected(),
         ]);
+    }
+
+    public function storeCategory(ModuleRegistry $registry, Request $request): RedirectResponse
+    {
+        abort_unless($registry->isEnabled('documents'), 404);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'parent_id' => ['nullable', 'exists:document_categories,id'],
+            'visibility' => ['nullable', 'in:all,department,team,users'],
+        ]);
+
+        $order = (int) DocumentCategory::query()->max('order') + 1;
+
+        $category = DocumentCategory::query()->create([
+            'name' => $validated['name'],
+            'parent_id' => $validated['parent_id'] ?? null,
+            'visibility' => $validated['visibility'] ?? 'all',
+            'audience' => [],
+            'order' => $order,
+        ]);
+
+        return redirect()
+            ->route('documents.upload', ['selected_category' => $category->id])
+            ->with('status', "Category \"{$category->name}\" created. Select a file to finish uploading.");
     }
 
     /**

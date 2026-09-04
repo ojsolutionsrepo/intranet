@@ -16,6 +16,35 @@
             <p class="badge badge-ok mb-4">{{ session('status') }}</p>
         @endif
 
+        @if ($driveConnected)
+            <p class="badge badge-ok mb-4">Google Drive connected — uploads are mirrored to Drive with a local cache.</p>
+        @else
+            <p class="note mb-4">Google Drive is not connected yet. Files stay on this server until you connect under Admin → Integrations (credentials alone are not enough — click <strong>Connect Google Drive</strong>).</p>
+        @endif
+
+        <div class="card p-5 mb-5 space-y-3">
+            <h2 class="font-display font-semibold text-lg">New category</h2>
+            <p class="note text-xs">Create a category here if it is not in the list below.</p>
+            <form method="POST" action="{{ route('documents.categories.store') }}" class="flex flex-wrap items-end gap-3">
+                @csrf
+                <div class="min-w-[12rem] flex-1">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)] mb-1" for="cat-name">Name</label>
+                    <input id="cat-name" type="text" name="name" value="{{ old('name') }}" class="input" required maxlength="120" placeholder="e.g. HR forms">
+                    @error('name') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div class="min-w-[10rem]">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)] mb-1" for="cat-parent">Parent (optional)</label>
+                    <select id="cat-parent" name="parent_id" class="select">
+                        <option value="">None</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" @selected((string) old('parent_id') === (string) $category->id)>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-secondary">Create category</button>
+            </form>
+        </div>
+
         {{-- Classic multipart form: Livewire WithFileUploads needs PHP tmpfile()/fileinfo (often disabled on shared hosts). --}}
         <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="card p-5 space-y-4">
             @csrf
@@ -29,7 +58,7 @@
                 <select id="doc-category" name="category_id" class="select" required>
                     <option value="">Select…</option>
                     @foreach ($categories as $category)
-                        <option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>{{ $category->name }}</option>
+                        <option value="{{ $category->id }}" @selected((string) old('category_id', request('selected_category')) === (string) $category->id)>{{ $category->name }}</option>
                     @endforeach
                 </select>
                 @error('category_id') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror

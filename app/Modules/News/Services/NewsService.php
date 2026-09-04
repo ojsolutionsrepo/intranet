@@ -15,10 +15,11 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 final class NewsService
 {
+    private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
     public function __construct(
         private readonly HtmlSanitizer $sanitizer,
         private readonly AudienceResolver $audience,
@@ -59,11 +60,15 @@ final class NewsService
         return $post->load('attachments');
     }
 
-    public function storeInlineImage(User $author, TemporaryUploadedFile|UploadedFile $file): string
+    public function storeInlineImage(User $author, UploadedFile $file): string
     {
         $this->assertCleanUpload($file);
 
-        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'jpg');
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        if (! in_array($ext, self::IMAGE_EXTENSIONS, true)) {
+            throw new \RuntimeException('Inline image type not allowed.');
+        }
+
         $path = $file->storeAs(
             'news/inline/'.$author->id,
             Str::uuid()->toString().'.'.$ext,
@@ -77,14 +82,14 @@ final class NewsService
         return Storage::disk('public')->url($path);
     }
 
-    public function storeAttachment(Post $post, User $author, TemporaryUploadedFile|UploadedFile $file): PostAttachment
+    public function storeAttachment(Post $post, User $author, UploadedFile $file): PostAttachment
     {
         $this->assertCleanUpload($file);
 
         $original = $file->getClientOriginalName();
-        $mime = $file->getMimeType() ?: 'application/octet-stream';
-        $isImage = str_starts_with($mime, 'image/');
-        $ext = strtolower($file->getClientOriginalExtension() ?: ($isImage ? 'jpg' : 'bin'));
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'bin');
+        $mime = $this->mimeFromExtension($ext);
+        $isImage = in_array($ext, self::IMAGE_EXTENSIONS, true);
         $path = $file->storeAs(
             'news/attachments/'.$post->id,
             Str::uuid()->toString().'.'.$ext,
@@ -107,7 +112,7 @@ final class NewsService
         ]);
     }
 
-    private function assertCleanUpload(TemporaryUploadedFile|UploadedFile $file): void
+    private function assertCleanUpload(UploadedFile $file): void
     {
         $real = $file->getRealPath();
         if (! is_string($real) || $real === '') {
@@ -118,6 +123,26 @@ final class NewsService
         if (! ($scan['clean'] ?? false)) {
             throw new \RuntimeException($scan['message'] ?? 'Upload failed virus scan.');
         }
+    }
+
+    private function mimeFromExtension(string $ext): string
+    {
+        return match (strtolower($ext)) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'txt' => 'text/plain',
+            'csv' => 'text/csv',
+            default => 'application/octet-stream',
+        };
     }
 
     /**

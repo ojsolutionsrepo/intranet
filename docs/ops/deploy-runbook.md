@@ -189,6 +189,8 @@ That value is `GOOGLE_DRIVE_FOLDER_ID`.
 4. Click **Connect Google Drive** and approve with the Google account that can access the folder.
 5. Confirm status shows connected.
 
+Once connected, **Documents → Upload** mirrors files to Google Drive (and keeps a local cache). Until Connect succeeds, uploads stay on the server only — saving Client ID/secret is not enough by itself.
+
 ### E. Error: `403: access_denied` / “has not completed Google verification”
 
 The OAuth app is in **Testing**. Only approved test users can connect.
@@ -215,7 +217,7 @@ Do **not** publish an External app unless you are ready for Google’s verificat
 
 Some shared hosts disable PHP `tmpfile()` and/or `fileinfo` (`finfo_open`). Livewire’s upload pipeline needs those and will 500.
 
-**Logo / favicon** on **Admin → Site settings** and **document upload** on **Documents → Upload** use **classic multipart forms** (not Livewire temp uploads), so they work on those hosts.
+**Logo / favicon** on **Admin → Site settings**, **document upload**, and **news create** (attachments + inline images) use **classic multipart forms** (not Livewire temp uploads), so they work on those hosts.
 
 If other Livewire file fields still fail with `tmpfile()` / `finfo_open` undefined, ask the host to:
 

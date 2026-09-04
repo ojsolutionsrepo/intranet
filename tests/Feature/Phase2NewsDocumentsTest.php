@@ -62,15 +62,15 @@ it('UR-NEW-03 composer stores rich text and attachments', function () {
     $image = UploadedFile::fake()->image('banner.png', 120, 80);
     $doc = UploadedFile::fake()->create('briefing.pdf', 120, 'application/pdf');
 
-    \Livewire\Livewire::actingAs($admin)
-        ->test(\App\Modules\News\Livewire\NewsComposer::class)
-        ->set('title', 'Office reopening')
-        ->set('summary', 'What to expect next week')
-        ->set('body_html', '<p>Please <strong>arrive early</strong>.</p>')
-        ->set('status', 'published')
-        ->set('attachments', [$image, $doc])
-        ->call('save')
-        ->assertHasNoErrors()
+    actingAs($admin)
+        ->post(route('news.store'), [
+            'title' => 'Office reopening',
+            'summary' => 'What to expect next week',
+            'body_html' => '<p>Please <strong>arrive early</strong>.</p>',
+            'category' => 'General',
+            'status' => 'published',
+            'attachments' => [$image, $doc],
+        ])
         ->assertRedirect();
 
     $post = Post::query()->where('title', 'Office reopening')->firstOrFail();
@@ -85,6 +85,18 @@ it('UR-NEW-03 composer stores rich text and attachments', function () {
         ->assertSee('arrive early')
         ->assertSee('Attachments')
         ->assertSee('briefing.pdf');
+});
+
+it('creates a document category from the upload page', function () {
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+
+    actingAs($admin)
+        ->post(route('documents.categories.store'), [
+            'name' => 'Board packs',
+        ])
+        ->assertRedirect(route('documents.upload', ['selected_category' => DocumentCategory::query()->where('slug', 'board-packs')->value('id')]));
+
+    expect(DocumentCategory::query()->where('name', 'Board packs')->exists())->toBeTrue();
 });
 
 it('UR-NEW-04 hides audience-targeted posts from non-members', function () {

@@ -13,6 +13,8 @@ class DocumentVersion extends Model
         'version_number',
         'storage_ref',
         'disk',
+        'drive_file_id',
+        'drive_revision_id',
         'original_filename',
         'mime',
         'size',

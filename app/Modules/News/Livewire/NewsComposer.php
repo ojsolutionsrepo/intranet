@@ -7,15 +7,13 @@ use App\Modules\News\Models\Post;
 use App\Modules\News\Services\NewsService;
 use App\Shared\Models\Department;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use Livewire\WithFileUploads;
 
+/**
+ * @deprecated Prefer classic multipart form at news.create (host-safe uploads).
+ */
 class NewsComposer extends Component
 {
-    use WithFileUploads;
-
     public string $title = '';
 
     public string $summary = '';
@@ -33,38 +31,6 @@ class NewsComposer extends Component
     /** @var list<string> */
     public array $department_ids = [];
 
-    /** @var list<TemporaryUploadedFile> */
-    public array $attachments = [];
-
-    public ?TemporaryUploadedFile $inlineImage = null;
-
-    public function updatedInlineImage(NewsService $news): void
-    {
-        $this->validate([
-            'inlineImage' => ['required', 'image', 'max:5120'],
-        ]);
-
-        $user = Auth::user();
-        if (! $user instanceof User || ! $this->inlineImage) {
-            return;
-        }
-
-        $url = $news->storeInlineImage($user, $this->inlineImage);
-        $this->inlineImage = null;
-        $this->dispatch('rich-editor-insert-image', url: $url);
-    }
-
-    public function removeAttachment(int $index): void
-    {
-        if (! isset($this->attachments[$index])) {
-            return;
-        }
-
-        $files = $this->attachments;
-        unset($files[$index]);
-        $this->attachments = array_values($files);
-    }
-
     public function save(NewsService $news): void
     {
         $this->validate([
@@ -73,8 +39,6 @@ class NewsComposer extends Component
             'body_html' => ['required', 'string'],
             'category' => ['required', 'string', 'max:80'],
             'status' => ['required', 'in:draft,in_review,published'],
-            'attachments' => ['nullable', 'array', 'max:10'],
-            'attachments.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,ppt,pptx'],
         ]);
 
         $user = Auth::user();
@@ -93,7 +57,6 @@ class NewsComposer extends Component
             'audience' => [
                 'departments' => $this->department_ids,
             ],
-            'attachments' => $this->attachments,
         ]);
 
         session()->flash('status', 'Post saved.');
