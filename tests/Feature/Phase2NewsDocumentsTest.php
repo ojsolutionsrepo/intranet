@@ -160,6 +160,32 @@ it('UR-DOC-03/04/05 versions, downloads previous, and restore-as-new', function 
         ->and($v3->changelog)->toContain('Restored from v1');
 });
 
+it('serves PDF preview inline on the same origin', function () {
+    Storage::fake('local');
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+    $category = DocumentCategory::query()->where('slug', 'guides')->firstOrFail();
+
+    $pdf = UploadedFile::fake()->createWithContent('brief.pdf', '%PDF-1.4 preview-ok');
+    $result = app(DocumentService::class)->upload($admin, [
+        'title' => 'Previewable brief',
+        'category_id' => $category->id,
+        'visibility' => 'all',
+        'audience' => [],
+    ], $pdf);
+
+    actingAs($admin)
+        ->get(route('documents.preview', $result['document']))
+        ->assertOk()
+        ->assertHeader('content-type', 'application/pdf')
+        ->assertHeader('content-disposition', 'inline; filename="brief.pdf"');
+
+    actingAs($admin)
+        ->get(route('documents.show', $result['document']))
+        ->assertOk()
+        ->assertSee(route('documents.preview', $result['document']), false)
+        ->assertDontSee('mozilla.github.io/pdf.js', false);
+});
+
 it('UR-DOC-07 enforces department ACL on direct URL', function () {
     $document = Document::query()->where('title', 'Remote Working Policy')->firstOrFail();
     $opsOnly = User::factory()->create(['email' => 'ops.only@oj.local']);

@@ -79,10 +79,12 @@
         <div class="card p-2 mb-6">
             <iframe
                 title="PDF preview"
-                class="w-full min-h-[480px] rounded-md border border-[var(--line)]"
-                src="https://mozilla.github.io/pdf.js/web/viewer.html?file={{ urlencode(route('documents.download', $document)) }}"
+                class="w-full min-h-[480px] rounded-md border border-[var(--line)] bg-[var(--paper-2)]"
+                src="{{ route('documents.preview', $document) }}"
             ></iframe>
-            <p class="note mt-2 px-2">Preview uses PDF.js. If the file is private to this session, open via Download instead.</p>
+            <p class="note mt-2 px-2">Preview opens the PDF in your browser. If it stays blank, use <a class="underline" href="{{ route('documents.download', $document) }}">Download</a>.</p>
         </div>
+    @elseif ($document->currentVersion)
+        <p class="note mb-6">In-browser preview is available for PDFs. Use Download for this file type.</p>
     @endif
 @endsection

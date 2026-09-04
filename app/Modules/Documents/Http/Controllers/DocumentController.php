@@ -157,6 +157,33 @@ class DocumentController extends Controller
         ]);
     }
 
+    /**
+     * Same-origin inline PDF for in-page preview (auth cookies apply; remote PDF.js cannot).
+     */
+    public function preview(ModuleRegistry $registry, Document $document, DocumentService $documents): Response
+    {
+        abort_unless($registry->isEnabled('documents'), 404);
+        Gate::authorize('download', $document);
+
+        $version = $document->currentVersion;
+        abort_unless($version, 404);
+
+        $isPdf = ($version->mime === 'application/pdf')
+            || str_ends_with(strtolower($version->original_filename), '.pdf');
+        abort_unless($isPdf, 415, 'Only PDF files can be previewed in the browser.');
+
+        $binary = $documents->download($document, $version, request()->user());
+        $filename = str_replace(['"', "\r", "\n"], '', $version->original_filename);
+
+        return response($binary, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Content-Length' => (string) strlen($binary),
+            'Cache-Control' => 'private, max-age=60',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public function downloadVersion(ModuleRegistry $registry, Document $document, DocumentVersion $version, DocumentService $documents): StreamedResponse
     {
         abort_unless($registry->isEnabled('documents'), 404);

@@ -90,6 +90,10 @@ class DocumentsServiceProvider extends ServiceProvider
                         ->name('documents.download')
                         ->middleware(['can:documents.view', 'throttle:downloads']);
 
+                    Route::get('/{document}/preview', [DocumentController::class, 'preview'])
+                        ->name('documents.preview')
+                        ->middleware(['can:documents.view', 'throttle:downloads']);
+
                     Route::get('/{document}/versions/{version}/download', [DocumentController::class, 'downloadVersion'])
                         ->name('documents.download-version')
                         ->middleware(['can:documents.view', 'throttle:downloads']);
