@@ -62,6 +62,10 @@ class DocumentsServiceProvider extends ServiceProvider
                         ->name('documents.upload')
                         ->middleware('can:documents.upload');
 
+                    Route::post('/upload', [DocumentController::class, 'store'])
+                        ->name('documents.store')
+                        ->middleware('can:documents.upload');
+
                     Route::get('/search', [DocumentController::class, 'search'])
                         ->name('documents.search')
                         ->middleware('can:documents.view');

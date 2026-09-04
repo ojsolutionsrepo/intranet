@@ -44,10 +44,10 @@ final class DocumentService
         $path = sprintf('%s/%s.%s', now()->format('Y/m'), Str::uuid(), $ext);
 
         $stored = $this->storage->put($path, $contents, [
-            'mime' => $file->getMimeType(),
+            'mime' => $this->mimeFromExtension($ext),
         ]);
 
-        $document = DB::transaction(function () use ($uploader, $data, $file, $checksum, $stored, $contents) {
+        $document = DB::transaction(function () use ($uploader, $data, $file, $checksum, $stored, $contents, $ext) {
             $document = Document::query()->create([
                 'category_id' => $data['category_id'],
                 'title' => $data['title'],
@@ -65,10 +65,10 @@ final class DocumentService
                 'storage_ref' => $stored['ref'],
                 'disk' => $stored['disk'],
                 'original_filename' => $file->getClientOriginalName(),
-                'mime' => $stored['mime'] ?? $file->getMimeType(),
+                'mime' => $stored['mime'] ?? $this->mimeFromExtension($ext),
                 'size' => $stored['size'],
                 'checksum_sha256' => $checksum,
-                'extracted_text' => $this->extractText($contents, $file->getClientOriginalExtension()),
+                'extracted_text' => $this->extractText($contents, $ext),
                 'changelog' => $data['changelog'] ?? 'Initial upload',
                 'uploaded_by' => $uploader->id,
             ]);
@@ -103,7 +103,7 @@ final class DocumentService
         $contents = (string) file_get_contents($file->getRealPath());
         $ext = strtolower($file->getClientOriginalExtension());
         $path = sprintf('%s/%s.%s', now()->format('Y/m'), Str::uuid(), $ext);
-        $stored = $this->storage->newVersion($path, $contents, ['mime' => $file->getMimeType()]);
+        $stored = $this->storage->newVersion($path, $contents, ['mime' => $this->mimeFromExtension($ext)]);
 
         $next = (int) $document->versions()->max('version_number') + 1;
 
@@ -113,7 +113,7 @@ final class DocumentService
             'storage_ref' => $stored['ref'],
             'disk' => $stored['disk'],
             'original_filename' => $file->getClientOriginalName(),
-            'mime' => $stored['mime'] ?? $file->getMimeType(),
+            'mime' => $stored['mime'] ?? $this->mimeFromExtension($ext),
             'size' => $stored['size'],
             'checksum_sha256' => $checksum,
             'extracted_text' => $this->extractText($contents, $ext),
@@ -234,39 +234,54 @@ final class DocumentService
     private function assertSafeUpload(UploadedFile $file): void
     {
         $ext = strtolower($file->getClientOriginalExtension());
-        $guessed = strtolower((string) ($file->guessExtension() ?: ''));
 
         if (! in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
             abort(422, 'File extension not allowed.');
         }
 
-        // Spoofed extension: declared type disagrees with sniffed type.
-        if ($guessed !== '' && $guessed !== $ext) {
-            $aliases = [
-                'doc' => ['docx', 'zip'],
-                'docx' => ['doc', 'zip'],
-                'xls' => ['xlsx', 'zip'],
-                'xlsx' => ['xls', 'zip'],
-                'ppt' => ['pptx', 'zip'],
-                'pptx' => ['ppt', 'zip'],
-                'csv' => ['txt', 'text'],
-                'txt' => ['csv', 'text'],
-                'md' => ['txt', 'text'],
-                'pdf' => ['pdf'],
-            ];
-            $ok = in_array($guessed, $aliases[$ext] ?? [], true);
-            if (! $ok) {
-                abort(422, 'Spoofed or mismatched file extension rejected.');
+        $real = $file->getRealPath();
+        if (! is_string($real) || $real === '' || ! is_readable($real)) {
+            abort(422, 'Uploaded file is missing or unreadable.');
+        }
+
+        $head = (string) file_get_contents($real, false, null, 0, 8);
+
+        // Avoid UploadedFile::guessExtension()/getMimeType() — both need finfo_open,
+        // which is often missing on shared hosts (same class of failure as Livewire tmpfile()).
+        if ($ext === 'pdf' && ! str_starts_with($head, '%PDF-')) {
+            abort(422, 'File does not look like a valid PDF.');
+        }
+
+        if (in_array($ext, ['doc', 'xls', 'ppt'], true)) {
+            // Legacy OLE Compound File signature.
+            if (! str_starts_with($head, "\xd0\xcf\x11\xe0")) {
+                abort(422, 'File does not look like a valid Office document.');
             }
         }
 
-        // Extra guard: .pdf must look like a PDF header.
-        if ($ext === 'pdf') {
-            $head = (string) file_get_contents($file->getRealPath(), false, null, 0, 5);
-            if (! str_starts_with($head, '%PDF-')) {
-                abort(422, 'Spoofed or mismatched file extension rejected.');
+        if (in_array($ext, ['docx', 'xlsx', 'pptx'], true)) {
+            // OOXML is a ZIP package.
+            if (! str_starts_with($head, 'PK')) {
+                abort(422, 'File does not look like a valid Office Open XML document.');
             }
         }
+    }
+
+    private function mimeFromExtension(string $ext): string
+    {
+        return match (strtolower($ext)) {
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'txt' => 'text/plain',
+            'csv' => 'text/csv',
+            'md' => 'text/markdown',
+            default => 'application/octet-stream',
+        };
     }
 
     /**
