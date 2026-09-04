@@ -23,34 +23,6 @@
                 </div>
                 @error('brand_color') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
             </div>
-
-            <div>
-                <label class="block text-[12.5px] font-semibold mb-1.5">Site logo</label>
-                @if ($logoUrl)
-                    <div class="flex items-center gap-3 mb-2">
-                        <img src="{{ $logoUrl }}" alt="Current logo" class="h-10 max-w-[160px] object-contain rounded-md border border-[var(--line)] bg-[var(--paper-2)] p-1">
-                        <button type="button" class="btn btn-ghost btn-sm" wire:click="removeLogo" wire:confirm="Remove the site logo?">Remove</button>
-                    </div>
-                @endif
-                <input type="file" class="input" wire:model="logo" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg">
-                <p class="note text-xs mt-1">PNG, SVG, JPG, or WebP · max 2&nbsp;MB. Replaces the OJ mark in the sidebar.</p>
-                <div wire:loading wire:target="logo" class="note text-xs mt-1">Uploading…</div>
-                @error('logo') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label class="block text-[12.5px] font-semibold mb-1.5">Favicon</label>
-                @if ($faviconUrl)
-                    <div class="flex items-center gap-3 mb-2">
-                        <img src="{{ $faviconUrl }}" alt="Current favicon" class="h-8 w-8 object-contain rounded border border-[var(--line)] bg-[var(--paper-2)] p-0.5">
-                        <button type="button" class="btn btn-ghost btn-sm" wire:click="removeFavicon" wire:confirm="Remove the favicon?">Remove</button>
-                    </div>
-                @endif
-                <input type="file" class="input" wire:model="favicon" accept=".ico,image/png,image/jpeg,image/gif,image/svg+xml,image/webp">
-                <p class="note text-xs mt-1">ICO, PNG, SVG, or WebP · max 512&nbsp;KB. Browser tab icon.</p>
-                <div wire:loading wire:target="favicon" class="note text-xs mt-1">Uploading…</div>
-                @error('favicon') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
-            </div>
         </fieldset>
 
         <div>
@@ -68,4 +40,47 @@
             <span wire:loading wire:target="save">Saving…</span>
         </button>
     </form>
+
+    {{-- Classic multipart uploads: Livewire file uploads need PHP tmpfile()/fileinfo, often disabled on shared hosts. --}}
+    <div class="space-y-5 mt-6 pt-5 border-t border-[var(--line)]">
+        <h2 class="font-display font-semibold text-sm text-[var(--ink-900)]">Logo &amp; favicon</h2>
+        <p class="note text-xs">Upload each file with its own Save button. This path works on hosts that block Livewire temporary uploads.</p>
+
+        <form method="POST" action="{{ route('admin.settings.logo') }}" enctype="multipart/form-data" class="space-y-2">
+            @csrf
+            <label class="block text-[12.5px] font-semibold mb-1.5">Site logo</label>
+            @if ($logoUrl)
+                <div class="flex items-center gap-3 mb-2">
+                    <img src="{{ $logoUrl }}" alt="Current logo" class="h-10 max-w-[160px] object-contain rounded-md border border-[var(--line)] bg-[var(--paper-2)] p-1">
+                    <button type="submit" form="remove-logo-form" class="btn btn-ghost btn-sm" onclick="return confirm('Remove the site logo?')">Remove</button>
+                </div>
+            @endif
+            <div class="flex flex-wrap items-end gap-3">
+                <input type="file" name="logo" class="input flex-1 min-w-[12rem]" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" required>
+                <button type="submit" class="btn btn-secondary btn-sm">Upload logo</button>
+            </div>
+            <p class="note text-xs">PNG, SVG, JPG, or WebP · max 2&nbsp;MB. Replaces the OJ mark in the sidebar.</p>
+            @error('logo') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
+        </form>
+
+        <form method="POST" action="{{ route('admin.settings.favicon') }}" enctype="multipart/form-data" class="space-y-2">
+            @csrf
+            <label class="block text-[12.5px] font-semibold mb-1.5">Favicon</label>
+            @if ($faviconUrl)
+                <div class="flex items-center gap-3 mb-2">
+                    <img src="{{ $faviconUrl }}" alt="Current favicon" class="h-8 w-8 object-contain rounded border border-[var(--line)] bg-[var(--paper-2)] p-0.5">
+                    <button type="submit" form="remove-favicon-form" class="btn btn-ghost btn-sm" onclick="return confirm('Remove the favicon?')">Remove</button>
+                </div>
+            @endif
+            <div class="flex flex-wrap items-end gap-3">
+                <input type="file" name="favicon" class="input flex-1 min-w-[12rem]" accept=".ico,image/png,image/jpeg,image/gif,image/svg+xml,image/webp" required>
+                <button type="submit" class="btn btn-secondary btn-sm">Upload favicon</button>
+            </div>
+            <p class="note text-xs">ICO, PNG, SVG, or WebP · max 512&nbsp;KB. Browser tab icon.</p>
+            @error('favicon') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
+        </form>
+    </div>
+
+    <form id="remove-logo-form" method="POST" action="{{ route('admin.settings.logo.remove') }}" class="hidden">@csrf @method('DELETE')</form>
+    <form id="remove-favicon-form" method="POST" action="{{ route('admin.settings.favicon.remove') }}" class="hidden">@csrf @method('DELETE')</form>
 </div>

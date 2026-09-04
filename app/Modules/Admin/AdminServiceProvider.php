@@ -3,6 +3,7 @@
 namespace App\Modules\Admin;
 
 use App\Core\Modules\ModuleRegistry;
+use App\Modules\Admin\Http\Controllers\BrandingUploadController;
 use App\Modules\Admin\Http\Controllers\ComplianceController;
 use App\Modules\Admin\Http\Controllers\DepartmentAdminController;
 use App\Modules\Admin\Http\Controllers\IntegrationHealthController;
@@ -99,6 +100,22 @@ class AdminServiceProvider extends ServiceProvider
 
                 Route::get('/settings', fn () => view('admin-module::settings'))
                     ->name('admin.settings')
+                    ->middleware('can:admin.settings.manage');
+
+                Route::post('/settings/logo', [BrandingUploadController::class, 'uploadLogo'])
+                    ->name('admin.settings.logo')
+                    ->middleware('can:admin.settings.manage');
+
+                Route::delete('/settings/logo', [BrandingUploadController::class, 'removeLogo'])
+                    ->name('admin.settings.logo.remove')
+                    ->middleware('can:admin.settings.manage');
+
+                Route::post('/settings/favicon', [BrandingUploadController::class, 'uploadFavicon'])
+                    ->name('admin.settings.favicon')
+                    ->middleware('can:admin.settings.manage');
+
+                Route::delete('/settings/favicon', [BrandingUploadController::class, 'removeFavicon'])
+                    ->name('admin.settings.favicon.remove')
                     ->middleware('can:admin.settings.manage');
 
                 Route::get('/compliance', [ComplianceController::class, 'subjectAccessForm'])

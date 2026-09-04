@@ -46,16 +46,32 @@ final class Branding
         return $this->publicUrl($this->faviconPath());
     }
 
-    public function storeLogo(UploadedFile $file): string
+    /**
+     * MIME type for the stored favicon, when known from the file extension.
+     */
+    public function faviconMime(): ?string
     {
-        $this->deleteStored($this->logoPath());
-        $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
-        if ($ext === '' || strlen($ext) > 5) {
-            $ext = 'png';
+        $path = $this->faviconPath();
+        if (! $path) {
+            return null;
         }
 
-        $path = $this->storePublicUpload($file, 'branding/logo.'.$ext);
+        return match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+            'ico' => 'image/x-icon',
+            'svg' => 'image/svg+xml',
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            default => null,
+        };
+    }
 
+    public function storeLogo(UploadedFile $file): string
+    {
+        $ext = $this->assertSafeBrandingUpload($file, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'], 2048);
+        $this->deleteStored($this->logoPath());
+        $path = $this->storePublicUpload($file, 'branding/logo.'.$ext);
         $this->settings->set('site_logo', $path, 'branding');
 
         return $path;
@@ -63,14 +79,9 @@ final class Branding
 
     public function storeFavicon(UploadedFile $file): string
     {
+        $ext = $this->assertSafeBrandingUpload($file, ['ico', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'], 512);
         $this->deleteStored($this->faviconPath());
-        $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
-        if ($ext === '' || strlen($ext) > 5) {
-            $ext = 'png';
-        }
-
         $path = $this->storePublicUpload($file, 'branding/favicon.'.$ext);
-
         $this->settings->set('site_favicon', $path, 'branding');
 
         return $path;
@@ -207,6 +218,59 @@ final class Branding
         return 0.2126 * $linear[0] + 0.7152 * $linear[1] + 0.0722 * $linear[2];
     }
 
+    /**
+     * Validate branding uploads without PHP fileinfo/finfo_open (often missing on shared hosts).
+     *
+     * @param  list<string>  $allowedExt
+     */
+    private function assertSafeBrandingUpload(UploadedFile $file, array $allowedExt, int $maxKilobytes): string
+    {
+        $ext = strtolower($file->getClientOriginalExtension() ?: '');
+        if ($ext === '' || ! in_array($ext, $allowedExt, true)) {
+            throw new \InvalidArgumentException('Unsupported file type. Allowed: '.implode(', ', $allowedExt).'.');
+        }
+
+        $size = (int) $file->getSize();
+        if ($size <= 0 || $size > $maxKilobytes * 1024) {
+            throw new \InvalidArgumentException("File must be between 1 byte and {$maxKilobytes} KB.");
+        }
+
+        $real = $file->getRealPath();
+        if (! is_string($real) || $real === '' || ! is_readable($real)) {
+            throw new \RuntimeException('Uploaded file is missing or unreadable. Try selecting it again.');
+        }
+
+        $head = (string) file_get_contents($real, false, null, 0, 512);
+
+        if (in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true)) {
+            if (@getimagesize($real) === false) {
+                throw new \InvalidArgumentException('File does not look like a valid image.');
+            }
+        } elseif ($ext === 'svg') {
+            if (! preg_match('/<svg[\s>]/i', $head) && ! str_contains(strtolower($head), '<svg')) {
+                // Full file for tiny SVGs where header missed the tag.
+                $full = (string) file_get_contents($real);
+                if (! preg_match('/<svg[\s>]/i', $full)) {
+                    throw new \InvalidArgumentException('File does not look like a valid SVG.');
+                }
+                if (preg_match('/<script|onload\s*=|javascript:/i', $full)) {
+                    throw new \InvalidArgumentException('SVG contains disallowed script content.');
+                }
+            } elseif (preg_match('/<script|onload\s*=|javascript:/i', (string) file_get_contents($real))) {
+                throw new \InvalidArgumentException('SVG contains disallowed script content.');
+            }
+        } elseif ($ext === 'ico') {
+            $bytes = substr($head, 0, 4);
+            $isIco = $bytes === "\x00\x00\x01\x00" || $bytes === "\x00\x00\x02\x00";
+            $isPng = str_starts_with($head, "\x89PNG\r\n\x1a\n");
+            if (! $isIco && ! $isPng) {
+                throw new \InvalidArgumentException('File does not look like a valid ICO/PNG favicon.');
+            }
+        }
+
+        return $ext;
+    }
+
     private function publicDisk(): FilesystemAdapter
     {
         /** @var FilesystemAdapter $disk */
@@ -221,8 +285,9 @@ final class Branding
             return null;
         }
 
+        // asset() keeps subdirectory installs (e.g. /intranet) working across hosts.
         // Cache-bust so browsers pick up replaced logo/favicon files with the same name.
-        return $this->publicDisk()->url($path).'?v='.$this->publicDisk()->lastModified($path);
+        return asset('storage/'.$path).'?v='.$this->publicDisk()->lastModified($path);
     }
 
     private function deleteStored(?string $path): void
