@@ -68,7 +68,7 @@ class DocumentController extends Controller
     /**
      * Classic multipart upload — avoids Livewire tmpfile()/fileinfo on restricted hosts.
      */
-    public function store(ModuleRegistry $registry, Request $request, DocumentService $documents): RedirectResponse
+    public function store(ModuleRegistry $registry, Request $request, DocumentService $documents, DriveBroker $drive): RedirectResponse
     {
         abort_unless($registry->isEnabled('documents'), 404);
 
@@ -107,17 +107,30 @@ class DocumentController extends Controller
                 ->withErrors(['file' => $e->getMessage()]);
         }
 
-        if ($result['duplicate_warning']) {
-            $owner = $result['duplicate_warning']->document?->owner?->name ?? 'unknown';
-
-            return redirect()
-                ->route('documents.show', $result['document'])
-                ->with('status', "Uploaded with duplicate checksum warning — same file already exists as another document version (owner: {$owner}).");
+        $status = 'Document uploaded.';
+        $warning = null;
+        if ($result['drive_mirrored']) {
+            $status = 'Document uploaded and mirrored to Google Drive.';
+        } elseif ($drive->isConnected() && $result['drive_error']) {
+            $warning = 'Document saved on the server, but Google Drive mirror failed: '.$result['drive_error'];
+        } elseif (! $drive->isConnected()) {
+            $status = 'Document uploaded locally. Connect Google Drive under Admin → Integrations to mirror new uploads.';
         }
 
-        return redirect()
+        if ($result['duplicate_warning']) {
+            $owner = $result['duplicate_warning']->document?->owner?->name ?? 'unknown';
+            $status .= " Duplicate checksum warning — same file already exists (owner: {$owner}).";
+        }
+
+        $redirect = redirect()
             ->route('documents.show', $result['document'])
-            ->with('status', 'Document uploaded.');
+            ->with('status', $status);
+
+        if ($warning) {
+            $redirect->with('warning', $warning);
+        }
+
+        return $redirect;
     }
 
     public function search(ModuleRegistry $registry, Request $request, DocumentService $documents): View
@@ -210,6 +223,33 @@ class DocumentController extends Controller
         return redirect()
             ->route('documents.show', $document)
             ->with('status', "Restored v{$version->version_number} as a new current version.");
+    }
+
+    public function trash(ModuleRegistry $registry, Document $document, DocumentService $documents): RedirectResponse
+    {
+        abort_unless($registry->isEnabled('documents'), 404);
+        Gate::authorize('delete', $document);
+
+        $title = $document->title;
+        $documents->trash($document);
+
+        return redirect()
+            ->route('documents.index')
+            ->with('status', "\"{$title}\" moved to trash (restorable for 30 days).");
+    }
+
+    public function restore(ModuleRegistry $registry, int $document, DocumentService $documents): RedirectResponse
+    {
+        abort_unless($registry->isEnabled('documents'), 404);
+
+        $model = Document::withTrashed()->findOrFail($document);
+        Gate::authorize('restore', $model);
+
+        $documents->restoreFromTrash($model);
+
+        return redirect()
+            ->route('documents.show', $model)
+            ->with('status', "\"{$model->title}\" restored from trash.");
     }
 
     public function storage(Request $request): Response

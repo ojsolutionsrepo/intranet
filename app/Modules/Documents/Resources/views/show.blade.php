@@ -25,9 +25,26 @@
                     · <span class="badge {{ $chip === 'overdue' ? 'badge-err' : ($chip === 'due' ? 'badge-warn' : 'badge-ok') }}">{{ ucfirst($chip) }}</span>
                 @endif
             </p>
+            @if (session('status'))
+                <p class="badge badge-ok mt-3">{{ session('status') }}</p>
+            @endif
+            @if (session('warning'))
+                <p class="badge badge-warn mt-3">{{ session('warning') }}</p>
+            @endif
         </div>
-        @if ($document->currentVersion)
-            <a href="{{ route('documents.download', $document) }}" class="btn btn-primary btn-sm">Download current</a>
+        @if ($document->currentVersion || auth()->user()?->can('documents.manage'))
+            <div class="flex flex-wrap gap-2">
+                @if ($document->currentVersion)
+                    <a href="{{ route('documents.download', $document) }}" class="btn btn-primary btn-sm">Download current</a>
+                @endif
+                @can('delete', $document)
+                    <form method="POST" action="{{ route('documents.trash', $document) }}"
+                          onsubmit="return confirm('Move this document to trash? It can be restored for 30 days.');">
+                        @csrf
+                        <button type="submit" class="btn btn-ghost btn-sm text-[var(--err-600)]">Delete</button>
+                    </form>
+                @endcan
+            </div>
         @endif
     </div>
 

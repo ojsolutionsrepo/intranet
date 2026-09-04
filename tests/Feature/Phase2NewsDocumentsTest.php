@@ -205,14 +205,25 @@ it('UR-DOC-07 enforces department ACL on direct URL', function () {
 
 it('UR-DOC-10 soft-trashes documents with restore', function () {
     $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+    $staff = User::query()->where('email', 'staff@oj.local')->firstOrFail();
     $document = Document::query()->where('title', 'Remote Working Policy')->firstOrFail();
-    $service = app(DocumentService::class);
 
-    $service->trash($document);
-    expect(Document::withTrashed()->find($document->id)?->trashed_at)->not->toBeNull();
+    actingAs($staff)
+        ->post(route('documents.trash', $document))
+        ->assertForbidden();
 
-    $service->restoreFromTrash(Document::withTrashed()->findOrFail($document->id));
-    expect(Document::query()->find($document->id))->not->toBeNull();
+    actingAs($admin)
+        ->post(route('documents.trash', $document))
+        ->assertRedirect(route('documents.index'));
+
+    expect(Document::withTrashed()->find($document->id)?->trashed())->toBeTrue();
+
+    actingAs($admin)
+        ->post(route('documents.restore', $document->id))
+        ->assertRedirect(route('documents.show', $document));
+
+    expect(Document::query()->find($document->id))->not->toBeNull()
+        ->and(Document::query()->find($document->id)?->trashed_at)->toBeNull();
 });
 
 it('UR-DOC-12 warns on duplicate checksum', function () {

@@ -15,7 +15,14 @@ class DocumentBrowser extends Component
 
     public string $category_id = '';
 
+    public bool $showTrashed = false;
+
     public function updatingQ(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingShowTrashed(): void
     {
         $this->resetPage();
     }
@@ -23,10 +30,19 @@ class DocumentBrowser extends Component
     public function render()
     {
         $user = auth()->user();
+        $canManage = $user?->can('documents.manage') ?? false;
+
+        if ($this->showTrashed && ! $canManage) {
+            $this->showTrashed = false;
+        }
 
         $query = Document::query()
             ->with(['category', 'owner', 'currentVersion'])
-            ->notTrashed()
+            ->when($this->showTrashed && $canManage, function ($q): void {
+                $q->onlyTrashed();
+            }, function ($q): void {
+                $q->notTrashed();
+            })
             ->when($this->category_id !== '', fn ($q) => $q->where('category_id', $this->category_id))
             ->when($this->q !== '', function ($q): void {
                 $q->where(function ($inner): void {
@@ -50,6 +66,8 @@ class DocumentBrowser extends Component
         return view('documents::livewire.browser', [
             'documents' => $paginator,
             'categories' => DocumentCategory::query()->orderBy('order')->orderBy('name')->get(),
+            'canManage' => $canManage,
+            'showingTrashed' => $this->showTrashed && $canManage,
         ]);
     }
 }

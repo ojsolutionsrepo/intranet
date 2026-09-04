@@ -7,6 +7,9 @@
 @endsection
 
 @section('content')
+    @if (session('status'))
+        <p class="badge badge-ok mb-4">{{ session('status') }}</p>
+    @endif
     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
             <div class="eyebrow font-mono text-[11px] tracking-widest uppercase text-signal-500 mb-2">Library</div>

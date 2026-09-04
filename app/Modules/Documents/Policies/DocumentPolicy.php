@@ -22,6 +22,16 @@ class DocumentPolicy
         return $user->can('documents.manage') || ($user->can('documents.upload') && $document->owner_id === $user->id);
     }
 
+    public function delete(User $user, Document $document): bool
+    {
+        return $user->can('documents.manage');
+    }
+
+    public function restore(User $user, Document $document): bool
+    {
+        return $user->can('documents.manage');
+    }
+
     public function upload(User $user): bool
     {
         return $user->can('documents.upload') || $user->can('documents.manage');

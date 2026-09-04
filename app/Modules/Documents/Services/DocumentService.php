@@ -25,7 +25,7 @@ final class DocumentService
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{document: Document, duplicate_warning: DocumentVersion|null}
+     * @return array{document: Document, duplicate_warning: DocumentVersion|null, drive_mirrored: bool, drive_error: string|null}
      */
     public function upload(User $uploader, array $data, UploadedFile $file): array
     {
@@ -45,6 +45,7 @@ final class DocumentService
 
         $stored = $this->storage->put($path, $contents, [
             'mime' => $this->mimeFromExtension($ext),
+            'name' => $file->getClientOriginalName(),
         ]);
 
         $document = DB::transaction(function () use ($uploader, $data, $file, $checksum, $stored, $contents, $ext) {
@@ -84,9 +85,15 @@ final class DocumentService
             'title' => $document->title,
             'version' => 1,
             'checksum' => $checksum,
+            'drive_mirrored' => (bool) ($stored['drive_mirrored'] ?? false),
         ]);
 
-        return ['document' => $document, 'duplicate_warning' => $duplicate];
+        return [
+            'document' => $document,
+            'duplicate_warning' => $duplicate,
+            'drive_mirrored' => (bool) ($stored['drive_mirrored'] ?? false),
+            'drive_error' => isset($stored['drive_error']) && is_string($stored['drive_error']) ? $stored['drive_error'] : null,
+        ];
     }
 
     /**
@@ -105,7 +112,10 @@ final class DocumentService
         $contents = (string) file_get_contents($file->getRealPath());
         $ext = strtolower($file->getClientOriginalExtension());
         $path = sprintf('%s/%s.%s', now()->format('Y/m'), Str::uuid(), $ext);
-        $stored = $this->storage->newVersion($path, $contents, ['mime' => $this->mimeFromExtension($ext)]);
+        $stored = $this->storage->newVersion($path, $contents, [
+            'mime' => $this->mimeFromExtension($ext),
+            'name' => $file->getClientOriginalName(),
+        ]);
 
         $next = (int) $document->versions()->max('version_number') + 1;
 

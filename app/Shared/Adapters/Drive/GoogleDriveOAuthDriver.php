@@ -194,12 +194,13 @@ final class GoogleDriveOAuthDriver implements DriveBroker
                 .$contents."\r\n"
                 ."--{$boundary}--";
 
+            // supportsAllDrives is required when GOOGLE_DRIVE_FOLDER_ID is in a Shared Drive.
             $response = Http::withToken($token)
                 ->withHeaders([
                     'Content-Type' => 'multipart/related; boundary='.$boundary,
                 ])
                 ->withBody($body, 'multipart/related; boundary='.$boundary)
-                ->post('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink');
+                ->post('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name,webViewLink');
 
             if (! $response->successful()) {
                 throw new \RuntimeException('Drive upload failed: '.$response->body());
@@ -224,7 +225,7 @@ final class GoogleDriveOAuthDriver implements DriveBroker
         return $this->breaker->call(function () use ($token, $driveFileId, $contents, $mime) {
             $response = Http::withToken($token)
                 ->withBody($contents, $mime)
-                ->patch('https://www.googleapis.com/upload/drive/v3/files/'.urlencode($driveFileId).'?uploadType=media&fields=id,headRevisionId');
+                ->patch('https://www.googleapis.com/upload/drive/v3/files/'.urlencode($driveFileId).'?uploadType=media&supportsAllDrives=true&fields=id,headRevisionId');
 
             if (! $response->successful()) {
                 throw new \RuntimeException('Drive update failed: '.$response->body());
@@ -246,7 +247,7 @@ final class GoogleDriveOAuthDriver implements DriveBroker
 
         return $this->breaker->call(function () use ($token, $driveFileId) {
             $response = Http::withToken($token)
-                ->get('https://www.googleapis.com/drive/v3/files/'.urlencode($driveFileId).'?alt=media');
+                ->get('https://www.googleapis.com/drive/v3/files/'.urlencode($driveFileId).'?alt=media&supportsAllDrives=true');
 
             if (! $response->successful()) {
                 throw new \RuntimeException('Drive download failed HTTP '.$response->status());

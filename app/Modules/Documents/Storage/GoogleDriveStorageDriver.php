@@ -4,11 +4,12 @@ namespace App\Modules\Documents\Storage;
 
 use App\Modules\Documents\Contracts\DocumentStorageAdapter;
 use App\Shared\Contracts\DriveBroker;
+use Illuminate\Support\Facades\Log;
 use SplFileInfo;
 
 /**
  * Writes to local storage always (cache / degrade path), and mirrors to Google Drive
- * when the broker is connected (UR-INT-02).
+ * when the broker is connected (UR-INT-02). Microsoft OneDrive is not supported.
  */
 final class GoogleDriveStorageDriver implements DocumentStorageAdapter
 {
@@ -21,28 +22,7 @@ final class GoogleDriveStorageDriver implements DocumentStorageAdapter
     {
         $stored = $this->local->put($path, $contents, $options);
 
-        if (! $this->drive->isConnected()) {
-            return $stored;
-        }
-
-        try {
-            $folderId = config('integrations.drive.folder_id');
-            $folderId = is_string($folderId) && $folderId !== '' ? $folderId : null;
-            $name = basename($path);
-            $uploaded = $this->drive->upload(
-                $name,
-                $contents,
-                $options['mime'] ?? null,
-                $folderId,
-            );
-
-            $stored['drive_file_id'] = $uploaded['drive_file_id'] ?? null;
-            $stored['disk'] = 'drive';
-        } catch (\Throwable) {
-            // Degrade, never fail — local copy remains authoritative for download.
-        }
-
-        return $stored;
+        return $this->mirrorToDrive($stored, $contents, $options, basename($path));
     }
 
     public function putFile(string $path, SplFileInfo $file, array $options = []): array
@@ -64,29 +44,9 @@ final class GoogleDriveStorageDriver implements DocumentStorageAdapter
 
     public function newVersion(string $path, string $contents, array $options = []): array
     {
-        // Prefer a distinct local path, then mirror to Drive like put().
         $localVersion = $this->local->newVersion($path, $contents, $options);
 
-        if (! $this->drive->isConnected()) {
-            return $localVersion;
-        }
-
-        try {
-            $folderId = config('integrations.drive.folder_id');
-            $folderId = is_string($folderId) && $folderId !== '' ? $folderId : null;
-            $uploaded = $this->drive->upload(
-                basename($localVersion['ref']),
-                $contents,
-                $options['mime'] ?? null,
-                $folderId,
-            );
-            $localVersion['drive_file_id'] = $uploaded['drive_file_id'] ?? null;
-            $localVersion['disk'] = 'drive';
-        } catch (\Throwable) {
-            // Keep local version.
-        }
-
-        return $localVersion;
+        return $this->mirrorToDrive($localVersion, $contents, $options, basename($localVersion['ref']));
     }
 
     public function listVersions(string $prefix): array
@@ -111,5 +71,44 @@ final class GoogleDriveStorageDriver implements DocumentStorageAdapter
                 ? 'Drive connected; uploads mirror to Google Drive with local cache'
                 : 'Drive not connected; using local document storage only',
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $stored
+     * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
+     */
+    private function mirrorToDrive(array $stored, string $contents, array $options, string $fallbackName): array
+    {
+        if (! $this->drive->isConnected()) {
+            return $stored;
+        }
+
+        try {
+            $folderId = config('integrations.drive.folder_id');
+            $folderId = is_string($folderId) && $folderId !== '' ? $folderId : null;
+            $name = is_string($options['name'] ?? null) && $options['name'] !== ''
+                ? $options['name']
+                : $fallbackName;
+
+            $uploaded = $this->drive->upload(
+                $name,
+                $contents,
+                $options['mime'] ?? null,
+                $folderId,
+            );
+
+            $stored['drive_file_id'] = $uploaded['drive_file_id'] ?? null;
+            $stored['disk'] = 'drive';
+            $stored['drive_mirrored'] = filled($stored['drive_file_id']);
+        } catch (\Throwable $e) {
+            Log::warning('Document Drive mirror failed', [
+                'message' => $e->getMessage(),
+            ]);
+            $stored['drive_mirrored'] = false;
+            $stored['drive_error'] = $e->getMessage();
+        }
+
+        return $stored;
     }
 }

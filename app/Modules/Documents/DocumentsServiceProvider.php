@@ -102,6 +102,14 @@ class DocumentsServiceProvider extends ServiceProvider
                         ->name('documents.restore-version')
                         ->middleware('can:documents.upload');
 
+                    Route::post('/{document}/trash', [DocumentController::class, 'trash'])
+                        ->name('documents.trash')
+                        ->middleware('can:documents.manage');
+
+                    Route::post('/trashed/{document}/restore', [DocumentController::class, 'restore'])
+                        ->name('documents.restore')
+                        ->middleware('can:documents.manage');
+
                     Route::get('/{document}', [DocumentController::class, 'show'])
                         ->name('documents.show')
                         ->middleware('can:documents.view');
