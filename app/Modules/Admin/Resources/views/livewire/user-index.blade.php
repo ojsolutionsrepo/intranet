@@ -31,6 +31,7 @@
                     </td>
                     <td class="py-3 px-3 text-right whitespace-nowrap">
                         <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-ghost btn-sm">Edit</a>
+                        <a href="{{ route('admin.users.staff-information.edit', $user) }}" class="btn btn-ghost btn-sm">Staff info</a>
                         @if ($user->is_active)
                             <button type="button" wire:click="deactivate({{ $user->id }})" class="btn btn-ghost btn-sm" wire:confirm="Deactivate {{ $user->name }}?">Deactivate</button>
                         @else

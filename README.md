@@ -4,6 +4,11 @@ Laravel 11 modular monolith for the OJ Solutions staff intranet.
 
 | Doc | Reference |
 |-----|-----------|
+| **Documentation index** | [`docs/README.md`](docs/README.md) |
+| **Technical documentation (as-built)** | [`docs/TECHNICAL.md`](docs/TECHNICAL.md) |
+| Developer handbook | [`docs/DEVELOPER.md`](docs/DEVELOPER.md) |
+| Runtime flows | [`docs/FLOWS.md`](docs/FLOWS.md) |
+| HTTP routes | [`docs/ROUTES.md`](docs/ROUTES.md) |
 | Implementation | OJ-INTRA-IMP-001 |
 | Requirements | OJ-INTRA-URD-001 |
 | Gates | OJ-INTRA-CHK-001 |

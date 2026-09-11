@@ -17,6 +17,7 @@ use App\Modules\Admin\Livewire\QuickLinkManager;
 use App\Modules\Admin\Livewire\SiteSettingsForm;
 use App\Modules\Admin\Livewire\UserForm;
 use App\Modules\Admin\Livewire\UserIndex;
+use App\Modules\Directory\Http\Controllers\StaffInformationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -76,6 +77,22 @@ class AdminServiceProvider extends ServiceProvider
 
                 Route::get('/users/{user}/edit', [UserAdminController::class, 'edit'])
                     ->name('admin.users.edit')
+                    ->middleware('can:admin.users.manage');
+
+                Route::get('/users/{user}/staff-information', [StaffInformationController::class, 'adminEdit'])
+                    ->name('admin.users.staff-information.edit')
+                    ->middleware('can:admin.users.manage');
+
+                Route::post('/users/{user}/staff-information', [StaffInformationController::class, 'adminUpdate'])
+                    ->name('admin.users.staff-information.update')
+                    ->middleware('can:admin.users.manage');
+
+                Route::post('/users/{user}/staff-information/editing', [StaffInformationController::class, 'setEditing'])
+                    ->name('admin.users.staff-information.editing')
+                    ->middleware('can:admin.users.manage');
+
+                Route::get('/users/{user}/staff-information/cv', [StaffInformationController::class, 'downloadCv'])
+                    ->name('admin.users.staff-information.cv')
                     ->middleware('can:admin.users.manage');
 
                 Route::get('/departments', [DepartmentAdminController::class, 'index'])

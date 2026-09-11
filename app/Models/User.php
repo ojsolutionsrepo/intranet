@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\Directory\Models\StaffInformation;
 use App\Shared\Models\Department;
 use App\Shared\Models\Team;
 use App\Shared\Models\UserProfile;
@@ -65,6 +66,14 @@ class User extends Authenticatable
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
+    }
+
+    /**
+     * @return HasOne<StaffInformation, $this>
+     */
+    public function staffInformation(): HasOne
+    {
+        return $this->hasOne(StaffInformation::class);
     }
 
     /**

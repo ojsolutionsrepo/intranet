@@ -6,6 +6,7 @@ use App\Core\Modules\ModuleRegistry;
 use App\Modules\Directory\Http\Controllers\DirectoryController;
 use App\Modules\Directory\Http\Controllers\ImportController;
 use App\Modules\Directory\Http\Controllers\ProfileController;
+use App\Modules\Directory\Http\Controllers\StaffInformationController;
 use App\Modules\Directory\Livewire\DirectoryIndex;
 use App\Modules\Directory\Livewire\OrgChart;
 use App\Modules\Directory\Livewire\ProfileEdit;
@@ -62,6 +63,18 @@ class DirectoryServiceProvider extends ServiceProvider
 
                 Route::get('/profile/edit', [ProfileController::class, 'edit'])
                     ->name('directory.profile.edit')
+                    ->middleware('can:directory.view');
+
+                Route::get('/staff-information', [StaffInformationController::class, 'edit'])
+                    ->name('directory.staff-information.edit')
+                    ->middleware('can:directory.view');
+
+                Route::post('/staff-information', [StaffInformationController::class, 'update'])
+                    ->name('directory.staff-information.update')
+                    ->middleware('can:directory.view');
+
+                Route::get('/staff-information/cv', [StaffInformationController::class, 'downloadCv'])
+                    ->name('directory.staff-information.cv')
                     ->middleware('can:directory.view');
 
                 Route::middleware('can:directory.import')->group(function () {

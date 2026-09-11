@@ -172,6 +172,7 @@
                     </button>
                     <div id="profile-menu-panel" class="profile-menu-panel" data-profile-menu-panel hidden role="menu">
                         <a href="{{ route('directory.profile.edit') }}" class="profile-menu-item" role="menuitem">Edit profile</a>
+                        <a href="{{ route('directory.staff-information.edit') }}" class="profile-menu-item" role="menuitem">Staff information</a>
                         @role('Admin')
                             <a href="{{ route('admin.settings') }}" class="profile-menu-item" role="menuitem">Settings</a>
                         @else

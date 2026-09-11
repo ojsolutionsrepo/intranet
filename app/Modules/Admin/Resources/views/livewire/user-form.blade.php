@@ -58,6 +58,9 @@
         </label>
         <div class="flex gap-2">
             <button type="submit" class="btn btn-primary">Save</button>
+            @if ($userId)
+                <a href="{{ route('admin.users.staff-information.edit', $userId) }}" class="btn btn-secondary">Staff information</a>
+            @endif
             <a href="{{ route('admin.users.index') }}" class="btn btn-ghost">Cancel</a>
         </div>
     </form>
