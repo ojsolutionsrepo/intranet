@@ -16,7 +16,7 @@ class StaffImport extends Component
     public array $previewRows = [];
 
     /** @var list<array{row: int, message: string}> */
-    public array $errors = [];
+    public array $importErrors = [];
 
     public bool $hasPreview = false;
 
@@ -30,7 +30,7 @@ class StaffImport extends Component
 
         $result = $importer->preview($this->file);
         $this->previewRows = $result['rows'];
-        $this->errors = $result['errors'];
+        $this->importErrors = $result['errors'];
         $this->hasPreview = true;
         $this->resultMessage = null;
     }
@@ -48,7 +48,7 @@ class StaffImport extends Component
         );
         $this->hasPreview = false;
         $this->previewRows = [];
-        $this->errors = [];
+        $this->importErrors = [];
         $this->file = null;
     }
 

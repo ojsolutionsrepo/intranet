@@ -14,11 +14,11 @@
     </form>
 
     @if ($hasPreview)
-        @if (count($errors))
+        @if (count($importErrors))
             <div class="alert alert-err mb-4">
-                <p class="font-semibold mb-2">{{ count($errors) }} validation issue(s) — bad rows will be skipped on commit.</p>
+                <p class="font-semibold mb-2">{{ count($importErrors) }} validation issue(s) — bad rows will be skipped on commit.</p>
                 <ul class="list-disc pl-4 text-sm">
-                    @foreach (array_slice($errors, 0, 20) as $error)
+                    @foreach (array_slice($importErrors, 0, 20) as $error)
                         <li>{{ $error['message'] }}</li>
                     @endforeach
                 </ul>
