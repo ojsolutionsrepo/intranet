@@ -208,3 +208,41 @@ it('stores DBS certificates privately and only lets the owner or an admin downlo
 
     actingAs($manager)->get(route('admin.users.staff-information.dbs', $staff))->assertForbidden();
 });
+
+it('takes admins straight to staff information after creating a user', function () {
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+    $department = \App\Shared\Models\Department::query()->firstOrFail();
+
+    \Livewire\Livewire::actingAs($admin)
+        ->test(\App\Modules\Admin\Livewire\UserForm::class)
+        ->assertSee('Save and add staff information')
+        ->set('name', 'New Starter')
+        ->set('email', 'new.starter@oj.local')
+        ->set('password', 'password123')
+        ->set('role', 'Staff')
+        ->set('department_id', (string) $department->id)
+        ->set('job_title', 'Analyst')
+        ->call('save')
+        ->assertRedirect(route('admin.users.staff-information.edit', User::query()->where('email', 'new.starter@oj.local')->firstOrFail()));
+
+    $newUser = User::query()->where('email', 'new.starter@oj.local')->firstOrFail();
+
+    // The form is pre-filled from the account the admin just created.
+    actingAs($admin)
+        ->get(route('admin.users.staff-information.edit', $newUser))
+        ->assertOk()
+        ->assertSee('New Starter')
+        ->assertSee('new.starter@oj.local')
+        ->assertSee('Analyst');
+
+    // Unticking the option keeps the old behaviour.
+    \Livewire\Livewire::actingAs($admin)
+        ->test(\App\Modules\Admin\Livewire\UserForm::class)
+        ->set('name', 'Later Person')
+        ->set('email', 'later@oj.local')
+        ->set('password', 'password123')
+        ->set('department_id', (string) $department->id)
+        ->set('add_staff_information', false)
+        ->call('save')
+        ->assertRedirect(route('admin.users.index'));
+});

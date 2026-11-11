@@ -30,8 +30,10 @@
                     @error('file') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
 
                     <div id="upload-progress" class="mt-3" hidden>
-                        <div class="h-2 w-full rounded-full bg-[var(--line)] overflow-hidden" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                            <div id="upload-bar" class="h-full bg-[var(--sig-600)] transition-[width] duration-150" style="width: 0%"></div>
+                        {{-- Inline styles: public/build CSS is prebuilt, so new utility classes wouldn't exist on the server. --}}
+                        <div role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                             style="height: 0.5rem; width: 100%; border-radius: 9999px; background: var(--line); overflow: hidden;">
+                            <div id="upload-bar" style="height: 100%; width: 0%; background: var(--sig-600); transition: width 150ms linear;"></div>
                         </div>
                         <p id="upload-status" class="note text-xs mt-1" aria-live="polite"></p>
                     </div>
@@ -57,7 +59,7 @@
                         wrap.hidden = false;
                         bar.style.width = pct + '%';
                         track.setAttribute('aria-valuenow', String(pct));
-                        bar.style.background = isError ? 'var(--err-600)' : '';
+                        bar.style.background = isError ? 'var(--err-600)' : 'var(--sig-600)';
                         status.textContent = text;
                         status.style.color = isError ? 'var(--err-600)' : '';
                     }
@@ -117,7 +119,7 @@
             </div>
 
             @if ($isFormImport)
-                <div class="alert alert-info mb-4">Employee Information Form detected. Each row is matched to an existing account by email, then by name. Check the "Import into" column and change any wrong matches before committing. Matched accounts keep their login email, name and role; their staff information record, including next of kin and bank details, is filled in from the form. Photo, CV and DBS uploads are kept as Google Drive links.</div>
+                <div class="alert alert-info mb-4">Employee Information Form detected. Each row is matched to an existing account by its staff (work) email, which is the unique identifier for each person. Check the "Import into" column and change any wrong matches before committing. Matched accounts keep their login email, name and role; their staff information record, including next of kin and bank details, is filled in from the form. Photo, CV and DBS uploads are kept as Google Drive links.</div>
             @endif
             @if (count($importErrors))
                 <div class="alert alert-err mb-4">
@@ -153,7 +155,7 @@
                                 <td class="py-2 px-3">{{ $row['email'] }}</td>
                                 <td class="py-2 px-3">{{ $isFormImport ? $row['job_title'] : $row['department'] }}</td>
                                 <td class="py-2 px-3">{{ $row['role'] ?? 'Staff (new) / unchanged' }}</td>
-                                <td class="py-2 px-3 min-w-[16rem]">
+                                <td class="py-2 px-3" style="min-width: 16rem;">
                                     @if (! empty($row['_valid']))
                                         <select name="mappings[{{ $i }}]" class="input text-[13px]" aria-label="Import {{ $row['name'] }} into">
                                             <option value="new" @selected($selected === 'new')>➕ Create new account</option>

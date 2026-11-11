@@ -71,10 +71,10 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ $formAction }}" enctype="multipart/form-data" class="space-y-6">
+        <form method="POST" action="{{ $formAction }}" enctype="multipart/form-data" class="flex flex-col gap-6">
             @csrf
 
-            <fieldset class="space-y-6 border-0 p-0 m-0 min-w-0" @disabled(! $canEdit)>
+            <fieldset class="flex flex-col gap-6 border-0 p-0 min-w-0" style="margin: 0;" @disabled(! $canEdit)>
             <section class="card p-5 space-y-4">
                 <h2 class="font-display font-semibold text-lg">Personal details</h2>
                 <div class="grid gap-4 sm:grid-cols-2">

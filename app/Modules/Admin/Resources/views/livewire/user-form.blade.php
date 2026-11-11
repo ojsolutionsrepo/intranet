@@ -56,8 +56,17 @@
         <label class="inline-flex items-center gap-2 text-sm">
             <input type="checkbox" wire:model="is_active"> Active
         </label>
+        @unless ($userId)
+            <label class="flex items-start gap-2 text-sm">
+                <input type="checkbox" wire:model.live="add_staff_information" class="mt-1">
+                <span>
+                    Add staff information next
+                    <span class="block note text-xs">Personal details, next of kin, contract, bank details, photo, CV and DBS. The name, email and job title above are filled in for you.</span>
+                </span>
+            </label>
+        @endunless
         <div class="flex gap-2">
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary">{{ ! $userId && $add_staff_information ? 'Save and add staff information' : 'Save' }}</button>
             @if ($userId)
                 <a href="{{ route('admin.users.staff-information.edit', $userId) }}" class="btn btn-secondary">Staff information</a>
             @endif

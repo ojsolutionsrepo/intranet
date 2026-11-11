@@ -30,6 +30,9 @@ class UserForm extends Component
 
     public bool $is_active = true;
 
+    /** New users only: continue straight to the staff information form after saving. */
+    public bool $add_staff_information = true;
+
     public function mount(?int $userId = null): void
     {
         $this->userId = $userId;
@@ -96,6 +99,14 @@ class UserForm extends Component
         ]);
 
         $audit->log($action, $user, $old, $user->fresh()->only(['name', 'email', 'is_active', 'manager_id']));
+
+        if ($action === 'user.created' && $this->add_staff_information) {
+            session()->flash('status', "User created. Now add {$user->name}'s staff information, or leave this page to do it later.");
+            // Full page load (no navigate): the staff information form uses classic file uploads.
+            $this->redirect(route('admin.users.staff-information.edit', $user));
+
+            return;
+        }
 
         session()->flash('status', 'User saved.');
         $this->redirect(route('admin.users.index'), navigate: true);
