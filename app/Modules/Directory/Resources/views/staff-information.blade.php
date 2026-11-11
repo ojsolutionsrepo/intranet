@@ -33,7 +33,15 @@
         @endif
 
         @if (! $canEdit)
-            <p class="badge badge-warn mb-4">Editing is locked. An administrator must enable editing before you can make changes.</p>
+            <p class="badge badge-warn mb-4">
+                @if ($record->submitted_at)
+                    Thanks, your information was submitted on {{ $record->submitted_at->format('j M Y') }}. To change anything, ask an administrator to re-open the form for you.
+                @else
+                    Editing is locked. An administrator must enable editing before you can make changes.
+                @endif
+            </p>
+        @elseif (! $adminMode)
+            <p class="badge badge-info mb-4">Please check everything carefully: you can submit this form once. After that, only an administrator can make changes or re-open it for you.</p>
         @endif
 
         @if ($adminMode && \App\Modules\Directory\Models\StaffInformation::actorCanManage($actor))
@@ -283,7 +291,7 @@
             </fieldset>
 
             @if ($canEdit)
-                <button type="submit" class="btn btn-primary">Save staff information</button>
+                <button type="submit" class="btn btn-primary">{{ $adminMode ? 'Save staff information' : 'Submit staff information' }}</button>
             @endif
         </form>
     </div>

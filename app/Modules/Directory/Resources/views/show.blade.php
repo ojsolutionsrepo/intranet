@@ -35,6 +35,9 @@
             @if (auth()->id() === $user->id)
                 <a href="{{ route('directory.profile.edit') }}" class="btn btn-ghost btn-sm mt-4">Edit profile</a>
             @endif
+            @can('admin.users.manage')
+                <a href="{{ route('admin.users.staff-information.edit', $user) }}" class="btn btn-ghost btn-sm mt-4">Edit staff information</a>
+            @endcan
         </div>
     </div>
 

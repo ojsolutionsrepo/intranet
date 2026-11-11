@@ -1,13 +1,14 @@
 <?php
 
 use App\Models\User;
-use App\Modules\Directory\Livewire\StaffImport;
 use App\Modules\Directory\Models\StaffInformation;
 use App\Modules\Directory\Services\StaffImportService;
 use Database\Seeders\DirectorySeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Http\UploadedFile;
-use Livewire\Livewire;
+use Illuminate\Support\Facades\Storage;
+
+use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
@@ -97,22 +98,88 @@ it('falls back to personal email, keeps existing roles, and lets the latest resp
         ->and(User::query()->where('email', 'baddate@oj.local')->exists())->toBeFalse();
 });
 
-it('renders the import component and never sends bank details to the browser', function () {
+it('maps form rows onto existing accounts by name when the email differs', function () {
+    $existing = User::factory()->create(['name' => 'Victor Cobham', 'email' => 'victor@oj.local']);
+    $usersBefore = User::query()->count();
+
+    $importer = app(StaffImportService::class);
+    $preview = $importer->preview(formCsv([
+        formRow([1 => 'Victor Cobham Nsa', 17 => 'cobham.other@example.com', 4 => 'victor.personal@example.com']),
+    ]));
+
+    expect($preview['rows'][0]['match_user_id'])->toBe($existing->id)
+        ->and($preview['rows'][0]['match_reason'])->toBe('name');
+
+    $stats = $importer->commit($preview['rows']);
+
+    $existing->refresh();
+    expect($stats)->toMatchArray(['created' => 0, 'updated' => 1])
+        ->and(User::query()->count())->toBe($usersBefore)
+        ->and($existing->email)->toBe('victor@oj.local')
+        ->and($existing->name)->toBe('Victor Cobham')
+        ->and($existing->staffInformation->full_name)->toBe('Victor Cobham Nsa')
+        ->and($existing->staffInformation->work_email)->toBe('cobham.other@example.com');
+});
+
+it('uploads, previews without leaking bank details, and commits through the import page', function () {
+    Storage::fake('local');
     $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+    $csv = file_get_contents(formCsv([formRow()])->getRealPath());
 
-    Livewire::actingAs($admin)
-        ->test(StaffImport::class)
+    // Background upload used by the progress bar.
+    actingAs($admin)
+        ->postJson(route('directory.import.preview'), [
+            'file' => UploadedFile::fake()->createWithContent('responses.csv', $csv),
+        ])
         ->assertOk()
-        ->set('file', UploadedFile::fake()->createWithContent(
-            'responses.csv',
-            file_get_contents(formCsv([formRow()])->getRealPath()),
-        ))
-        ->call('preview')
-        ->assertSet('isFormImport', true)
-        ->assertSee('Test Person')
-        ->assertDontSee('12345678')
-        ->call('commit')
-        ->assertSee('1 created');
+        ->assertJson(['ok' => true, 'next' => route('directory.import')]);
 
-    expect(User::query()->where('email', 'tess@oj.local')->exists())->toBeTrue();
+    actingAs($admin)
+        ->get(route('directory.import'))
+        ->assertOk()
+        ->assertSee('Employee Information Form detected')
+        ->assertSee('Test Person')
+        ->assertDontSee('12345678');
+
+    actingAs($admin)
+        ->post(route('directory.import.commit'))
+        ->assertRedirect(route('directory.import'));
+
+    expect(User::query()->where('email', 'tess@oj.local')->exists())->toBeTrue()
+        ->and(Storage::disk('local')->allFiles('staff-imports'))->toBe([]);
+});
+
+it('lets the admin override matches in the preview', function () {
+    Storage::fake('local');
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+    $target = User::factory()->create(['name' => 'Someone Else', 'email' => 'someone@oj.local']);
+    $csv = file_get_contents(formCsv([
+        formRow([1 => 'Unmatched Person', 17 => 'unmatched@example.com']),
+        formRow([1 => 'Skip Me', 17 => 'skipme@example.com']),
+    ])->getRealPath());
+
+    actingAs($admin)
+        ->post(route('directory.import.preview'), [
+            'file' => UploadedFile::fake()->createWithContent('responses.csv', $csv),
+        ])
+        ->assertRedirect(route('directory.import'));
+
+    actingAs($admin)
+        ->post(route('directory.import.commit'), ['mappings' => [0 => (string) $target->id, 1 => 'skip']])
+        ->assertSessionHas('status', 'Import complete: 0 created, 1 updated, 1 skipped.');
+
+    expect($target->fresh()->staffInformation->full_name)->toBe('Unmatched Person')
+        ->and(User::query()->where('email', 'unmatched@example.com')->exists())->toBeFalse()
+        ->and(User::query()->where('email', 'skipme@example.com')->exists())->toBeFalse();
+});
+
+it('refuses the import page for users without import permission', function () {
+    $staff = User::query()->where('email', 'staff@oj.local')->firstOrFail();
+
+    actingAs($staff)->get(route('directory.import'))->assertForbidden();
+    actingAs($staff)
+        ->post(route('directory.import.preview'), [
+            'file' => UploadedFile::fake()->createWithContent('responses.csv', 'name,email'),
+        ])
+        ->assertForbidden();
 });

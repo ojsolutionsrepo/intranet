@@ -29,7 +29,7 @@ final class StaffImportService
     private const FORM_MARKERS = ['personal_email_address', 'next_of_kin_full_name', 'work_email_address'];
 
     /** Columns shown in the preview table (kept free of personal data). */
-    public const PREVIEW_COLUMNS = ['name', 'email', 'department', 'job_title', 'role', 'source', '_valid'];
+    public const PREVIEW_COLUMNS = ['name', 'email', 'department', 'job_title', 'role', 'source', '_valid', 'match_user_id', 'match_reason'];
 
     /**
      * @return array{headers: list<string>, rows: list<array<string, mixed>>, errors: list<array{row: int, message: string}>}
@@ -50,6 +50,7 @@ final class StaffImportService
                 $errors[] = ['row' => $line, 'message' => $message];
             }
             $mapped['_valid'] = $rowErrors === [];
+            [$mapped['match_user_id'], $mapped['match_reason']] = $this->matchExistingUser($mapped);
 
             $normalized[] = $mapped;
         }
@@ -63,26 +64,32 @@ final class StaffImportService
 
     /**
      * @param  list<array<string, mixed>>  $rows
+     * @param  array<int, int|string>  $mappings  row index => existing user id, 'new' or 'skip'.
+     *                                            Rows without an entry use the automatic match.
      * @return array{created: int, updated: int, skipped: int}
      */
-    public function commit(array $rows): array
+    public function commit(array $rows, array $mappings = []): array
     {
         $created = 0;
         $updated = 0;
         $skipped = 0;
 
-        DB::transaction(function () use ($rows, &$created, &$updated, &$skipped): void {
-            foreach ($rows as $row) {
-                if (! ($row['_valid'] ?? false)) {
+        DB::transaction(function () use ($rows, $mappings, &$created, &$updated, &$skipped): void {
+            foreach ($rows as $index => $row) {
+                $target = $mappings[$index] ?? ($row['match_user_id'] ?? null) ?? 'new';
+
+                if (! ($row['_valid'] ?? false) || $target === 'skip') {
                     $skipped++;
 
                     continue;
                 }
 
-                $existing = $this->findUser($row);
+                $existing = is_numeric($target)
+                    ? User::query()->find((int) $target)
+                    : $this->findUser($row); // 'new', but never duplicate an email that already exists
 
                 if ($existing) {
-                    $existing->update(['name' => $row['name']]);
+                    // The existing account is authoritative: keep its login email and display name.
                     $user = $existing;
                 } else {
                     $user = User::query()->create([
@@ -175,6 +182,73 @@ final class StaffImportService
         }
 
         return null;
+    }
+
+    /**
+     * Best guess at which existing account a row belongs to.
+     * Order: login email → staff information emails → unambiguous name match.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array{0: int|null, 1: string|null}
+     */
+    public function matchExistingUser(array $row): array
+    {
+        if ($user = $this->findUser($row)) {
+            return [$user->id, 'email'];
+        }
+
+        $emails = array_values(array_filter([$row['email'] ?? null, $row['work_email'] ?? null, $row['personal_email'] ?? null]));
+        if ($emails !== []) {
+            $userId = StaffInformation::query()
+                ->where(function ($q) use ($emails) {
+                    foreach ($emails as $email) {
+                        $q->orWhereRaw('LOWER(work_email) = ?', [strtolower($email)])
+                            ->orWhereRaw('LOWER(personal_email) = ?', [strtolower($email)]);
+                    }
+                })
+                ->value('user_id');
+            if ($userId) {
+                return [(int) $userId, 'email'];
+            }
+        }
+
+        $tokens = $this->nameTokens((string) ($row['name'] ?? ''));
+        if (count($tokens) < 2) {
+            return [null, null];
+        }
+
+        $candidates = User::query()
+            ->with('staffInformation:id,user_id,full_name')
+            ->get(['id', 'name'])
+            ->filter(function (User $user) use ($tokens) {
+                foreach (array_filter([$user->name, $user->staffInformation?->full_name]) as $name) {
+                    $theirs = $this->nameTokens($name);
+                    if (count($theirs) < 2) {
+                        continue;
+                    }
+                    // e.g. "Victor Cobham" matches "Victor Cobham Nsa", in any word order.
+                    $shorter = count($theirs) <= count($tokens) ? $theirs : $tokens;
+                    $longer = $shorter === $theirs ? $tokens : $theirs;
+                    if (array_diff($shorter, $longer) === []) {
+                        return true;
+                    }
+                }
+
+                return false;
+            });
+
+        return $candidates->count() === 1 ? [$candidates->first()->id, 'name'] : [null, null];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function nameTokens(string $name): array
+    {
+        $clean = Str::lower(Str::ascii($name));
+        $parts = preg_split('/[^a-z]+/', $clean, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return array_values(array_unique(array_filter($parts, fn ($p) => strlen($p) > 1)));
     }
 
     /**

@@ -10,7 +10,6 @@ use App\Modules\Directory\Http\Controllers\StaffInformationController;
 use App\Modules\Directory\Livewire\DirectoryIndex;
 use App\Modules\Directory\Livewire\OrgChart;
 use App\Modules\Directory\Livewire\ProfileEdit;
-use App\Modules\Directory\Livewire\StaffImport;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -40,7 +39,6 @@ class DirectoryServiceProvider extends ServiceProvider
         Livewire::component('directory.index', DirectoryIndex::class);
         Livewire::component('directory.org-chart', OrgChart::class);
         Livewire::component('directory.profile-edit', ProfileEdit::class);
-        Livewire::component('directory.staff-import', StaffImport::class);
 
         Route::middleware(['web', 'auth', 'session.active'])
             ->prefix('directory')
@@ -83,6 +81,9 @@ class DirectoryServiceProvider extends ServiceProvider
 
                 Route::middleware('can:directory.import')->group(function () {
                     Route::get('/import', [ImportController::class, 'index'])->name('directory.import');
+                    Route::post('/import/preview', [ImportController::class, 'preview'])->name('directory.import.preview');
+                    Route::post('/import/commit', [ImportController::class, 'commit'])->name('directory.import.commit');
+                    Route::post('/import/cancel', [ImportController::class, 'cancel'])->name('directory.import.cancel');
                 });
             });
     }

@@ -98,6 +98,12 @@ final class StaffInformationService
                 $persisted->dbs_original_name = $dbs->getClientOriginalName();
             }
 
+            // Staff get one submission; after that only an admin can change the
+            // record or re-enable editing for them.
+            if ($actor->id === $subject->id && ! StaffInformation::actorCanManage($actor)) {
+                $persisted->staff_can_edit = false;
+            }
+
             $persisted->save();
 
             $profile = $subject->profile()->firstOrCreate(['user_id' => $subject->id]);

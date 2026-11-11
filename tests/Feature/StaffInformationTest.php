@@ -75,7 +75,20 @@ it('saves staff information including encrypted bank details and uploads', funct
         ->and($record->cv_path)->not->toBeNull()
         ->and($record->cv_original_name)->toBe('resume.pdf')
         ->and($record->submitted_at)->not->toBeNull()
-        ->and($record->staff_can_edit)->toBeTrue();
+        ->and($record->staff_can_edit)->toBeFalse(); // one submission, then locked
+
+    // A second staff submission is refused until an admin re-opens the form.
+    actingAs($staff)
+        ->post(route('directory.staff-information.update'), [
+            'full_name' => 'Changed Name',
+            'phone_number' => '+44 7700 900123',
+            'personal_email' => 'staff.personal@example.com',
+            'job_title' => 'Developer',
+            'contract_type' => 'full_time',
+            'start_date' => '2024-01-15',
+            'work_email' => 'staff@oj.local',
+        ]);
+    expect($record->fresh()->full_name)->toBe('Staff User');
 
     // Encrypted at rest — raw DB value must not equal plaintext.
     $raw = \Illuminate\Support\Facades\DB::table('staff_information')
