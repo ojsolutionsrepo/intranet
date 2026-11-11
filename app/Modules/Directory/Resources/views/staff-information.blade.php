@@ -219,6 +219,26 @@
                         @error('cv') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
+                @if ($record->photo_drive_url || $record->cv_drive_url || $record->dbs_check)
+                    <div class="border-t border-[var(--line)] pt-3 text-sm space-y-1">
+                        <p class="note text-xs">Imported from the Employee Information Google Form</p>
+                        @if ($record->photo_drive_url)
+                            <p>Photo: <a href="{{ $record->photo_drive_url }}" target="_blank" rel="noopener noreferrer" class="underline">Open in Google Drive</a></p>
+                        @endif
+                        @if ($record->cv_drive_url)
+                            <p>CV: <a href="{{ $record->cv_drive_url }}" target="_blank" rel="noopener noreferrer" class="underline">Open in Google Drive</a></p>
+                        @endif
+                        @if ($record->dbs_check)
+                            <p>DBS check:
+                                @if (str_starts_with($record->dbs_check, 'https://'))
+                                    <a href="{{ $record->dbs_check }}" target="_blank" rel="noopener noreferrer" class="underline">Open in Google Drive</a>
+                                @else
+                                    {{ $record->dbs_check }}
+                                @endif
+                            </p>
+                        @endif
+                    </div>
+                @endif
             </section>
 
             <section class="card p-5 space-y-4">

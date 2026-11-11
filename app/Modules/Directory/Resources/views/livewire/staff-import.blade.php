@@ -7,13 +7,16 @@
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)] mb-1">CSV / XLSX file</label>
             <input type="file" wire:model="file" accept=".csv,.txt,.xlsx,.xls" class="input">
-            <p class="note mt-1">Required columns: name, email, department. Optional: team, job_title, role, phone, extension, location, expertise, start_date.</p>
+            <p class="note mt-1">Either the directory template (required: name, email, department. Optional: team, job_title, role, phone, extension, location, expertise, start_date), or the Employee Information Form responses sheet downloaded from Google Sheets (File → Download → CSV or .xlsx).</p>
             @error('file') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
         </div>
         <button type="submit" class="btn btn-secondary" wire:loading.attr="disabled">Preview import</button>
     </form>
 
     @if ($hasPreview)
+        @if ($isFormImport)
+            <div class="alert alert-info mb-4">Employee Information Form detected. Staff are matched by work email (or personal email if no work email), and their full staff information record, including next of kin and bank details, is filled in. Photo, CV and DBS uploads are kept as Google Drive links.</div>
+        @endif
         @if (count($importErrors))
             <div class="alert alert-err mb-4">
                 <p class="font-semibold mb-2">{{ count($importErrors) }} validation issue(s) — bad rows will be skipped on commit.</p>
@@ -32,7 +35,7 @@
                     <th class="py-2 px-3">OK</th>
                     <th class="py-2 px-3">Name</th>
                     <th class="py-2 px-3">Email</th>
-                    <th class="py-2 px-3">Department</th>
+                    <th class="py-2 px-3">{{ $isFormImport ? 'Job title' : 'Department' }}</th>
                     <th class="py-2 px-3">Role</th>
                 </tr>
                 </thead>
@@ -42,8 +45,8 @@
                         <td class="py-2 px-3">{{ ! empty($row['_valid']) ? '✓' : '✗' }}</td>
                         <td class="py-2 px-3">{{ $row['name'] }}</td>
                         <td class="py-2 px-3">{{ $row['email'] }}</td>
-                        <td class="py-2 px-3">{{ $row['department'] }}</td>
-                        <td class="py-2 px-3">{{ $row['role'] }}</td>
+                        <td class="py-2 px-3">{{ $isFormImport ? $row['job_title'] : $row['department'] }}</td>
+                        <td class="py-2 px-3">{{ $row['role'] ?? 'Staff (new) / unchanged' }}</td>
                     </tr>
                 @endforeach
                 </tbody>

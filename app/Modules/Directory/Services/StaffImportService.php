@@ -3,17 +3,34 @@
 namespace App\Modules\Directory\Services;
 
 use App\Models\User;
+use App\Modules\Directory\Models\StaffInformation;
 use App\Shared\Models\Department;
 use App\Shared\Models\Team;
 use App\Shared\Models\UserProfile;
 use App\Shared\Services\AuditLogger;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
+/**
+ * Imports staff from either:
+ *  - the simple directory template (name, email, department, …), or
+ *  - the "Employee Information Form" Google Form responses sheet
+ *    (downloaded as CSV/XLSX), which also fills staff_information.
+ */
 final class StaffImportService
 {
+    /** Cell values that people type to mean "nothing". */
+    private const EMPTY_VALUES = ['n/a', 'na', 'none', 'nil', '-', '--', 'null'];
+
+    /** Header slugs that only appear in the Google Form export. */
+    private const FORM_MARKERS = ['personal_email_address', 'next_of_kin_full_name', 'work_email_address'];
+
+    /** Columns shown in the preview table (kept free of personal data). */
+    public const PREVIEW_COLUMNS = ['name', 'email', 'department', 'job_title', 'role', 'source', '_valid'];
+
     /**
      * @return array{headers: list<string>, rows: list<array<string, mixed>>, errors: list<array{row: int, message: string}>}
      */
@@ -25,17 +42,14 @@ final class StaffImportService
 
         foreach ($rows as $index => $row) {
             $line = $index + 2; // header is line 1
-            $mapped = $this->mapRow($row);
-            $rowErrors = $this->validateRow($mapped, $line);
+            $rowErrors = [];
+            $mapped = $this->mapRow($row, $rowErrors, $line);
+            $rowErrors = [...$rowErrors, ...$this->validateRow($mapped, $line)];
 
-            if ($rowErrors !== []) {
-                foreach ($rowErrors as $message) {
-                    $errors[] = ['row' => $line, 'message' => $message];
-                }
-                $mapped['_valid'] = false;
-            } else {
-                $mapped['_valid'] = true;
+            foreach ($rowErrors as $message) {
+                $errors[] = ['row' => $line, 'message' => $message];
             }
+            $mapped['_valid'] = $rowErrors === [];
 
             $normalized[] = $mapped;
         }
@@ -65,57 +79,71 @@ final class StaffImportService
                     continue;
                 }
 
-                $existing = User::query()->where('email', $row['email'])->first();
-                $user = User::query()->updateOrCreate(
-                    ['email' => $row['email']],
-                    [
+                $existing = $this->findUser($row);
+
+                if ($existing) {
+                    $existing->update(['name' => $row['name']]);
+                    $user = $existing;
+                } else {
+                    $user = User::query()->create([
+                        'email' => $row['email'],
                         'name' => $row['name'],
-                        'password' => $existing?->password ?? Str::password(16),
+                        'password' => Str::password(16),
                         'is_active' => true,
-                        'email_verified_at' => $existing?->email_verified_at ?? now(),
-                    ],
-                );
+                        'email_verified_at' => now(),
+                    ]);
+                }
 
-                $role = Role::findOrCreate($row['role'] ?: 'Staff');
-                $user->syncRoles([$role->name]);
+                // Never demote an existing user just because the file has no role column.
+                if ($row['role']) {
+                    $user->syncRoles([Role::findOrCreate($row['role'])->name]);
+                } elseif (! $existing) {
+                    $user->syncRoles([Role::findOrCreate('Staff')->name]);
+                }
 
-                $department = Department::query()->firstOrCreate(
-                    ['slug' => Str::slug($row['department'])],
-                    ['name' => $row['department'], 'order' => 0],
-                );
-
-                $user->departments()->sync([
-                    $department->id => [
-                        'is_lead' => false,
-                        'job_title' => $row['job_title'] ?: null,
-                    ],
-                ]);
-
-                if ($row['team']) {
-                    $team = Team::query()->firstOrCreate(
-                        [
-                            'department_id' => $department->id,
-                            'slug' => Str::slug($row['team']),
-                        ],
-                        ['name' => $row['team']],
+                if ($row['department']) {
+                    $department = Department::query()->firstOrCreate(
+                        ['slug' => Str::slug($row['department'])],
+                        ['name' => $row['department'], 'order' => 0],
                     );
-                    $user->teams()->sync([$team->id]);
+
+                    $user->departments()->sync([
+                        $department->id => [
+                            'is_lead' => false,
+                            'job_title' => $row['job_title'] ?: null,
+                        ],
+                    ]);
+
+                    if ($row['team']) {
+                        $team = Team::query()->firstOrCreate(
+                            [
+                                'department_id' => $department->id,
+                                'slug' => Str::slug($row['team']),
+                            ],
+                            ['name' => $row['team']],
+                        );
+                        $user->teams()->sync([$team->id]);
+                    }
                 }
 
                 $expertise = $row['expertise']
                     ? array_values(array_filter(array_map('trim', explode(',', (string) $row['expertise']))))
-                    : [];
+                    : null;
 
-                UserProfile::query()->updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'phone' => $row['phone'] ?: null,
-                        'extension' => $row['extension'] ?: null,
-                        'location' => $row['location'] ?: null,
-                        'expertise' => $expertise,
-                        'start_date' => $row['start_date'] ?: null,
-                    ],
-                );
+                // Only overwrite profile fields the file actually supplies.
+                $profile = array_filter([
+                    'phone' => $row['phone'],
+                    'extension' => $row['extension'],
+                    'location' => $row['location'],
+                    'expertise' => $expertise,
+                    'start_date' => $row['start_date'],
+                ], fn ($v) => $v !== null && $v !== '');
+
+                UserProfile::query()->updateOrCreate(['user_id' => $user->id], $profile);
+
+                if ($row['source'] === 'form') {
+                    $this->saveStaffInformation($user, $row);
+                }
 
                 if ($existing) {
                     $updated++;
@@ -132,6 +160,70 @@ final class StaffImportService
         ]);
 
         return compact('created', 'updated', 'skipped');
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function findUser(array $row): ?User
+    {
+        foreach (array_filter([$row['email'], $row['personal_email'] ?? null]) as $email) {
+            $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower((string) $email)])->first();
+            if ($user) {
+                return $user;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private function saveStaffInformation(User $user, array $row): void
+    {
+        $record = StaffInformation::query()->firstOrNew(['user_id' => $user->id]);
+
+        // Don't let an older form response overwrite details edited on the intranet since.
+        if ($record->exists && $record->submitted_at && $row['submitted_at']
+            && $record->submitted_at->greaterThan(CarbonImmutable::parse($row['submitted_at']))) {
+            return;
+        }
+
+        if (! $record->exists) {
+            $record->staff_can_edit = true;
+        }
+
+        $record->fill([
+            'full_name' => $row['name'],
+            'preferred_name' => $row['preferred_name'],
+            'phone_number' => $row['phone'],
+            'personal_email' => $row['personal_email'],
+            'gender' => $row['gender'],
+            'nationality' => $row['nationality'],
+            'date_of_birth' => $row['date_of_birth'],
+            'residential_address' => $row['residential_address'],
+            'nok_full_name' => $row['nok_full_name'],
+            'nok_phone' => $row['nok_phone'],
+            'nok_address' => $row['nok_address'],
+            'nok_relationship' => $row['nok_relationship'],
+            'job_title' => $row['job_title'],
+            'contract_type' => $row['contract_type'],
+            'start_date' => $row['start_date'],
+            'role_responsibilities' => $row['role_responsibilities'],
+            'work_email' => $row['work_email'],
+            'company_phone' => $row['company_phone'],
+            'linkedin_url' => $row['linkedin_url'],
+            'photo_drive_url' => $row['photo_drive_url'],
+            'cv_drive_url' => $row['cv_drive_url'],
+            'dbs_check' => $row['dbs_check'],
+            'bank_name' => $row['bank_name'],
+            'account_name' => $row['account_name'],
+            'account_number' => $row['account_number'],
+            'sort_code' => $row['sort_code'],
+            'submitted_at' => $row['submitted_at'] ?? now(),
+        ]);
+        $record->save();
     }
 
     /**
@@ -163,7 +255,7 @@ final class StaffImportService
 
         while (($data = fgetcsv($handle)) !== false) {
             if ($headers === null) {
-                $headers = array_map(fn ($h) => Str::slug((string) $h, '_'), $data);
+                $headers = $this->normalizeHeaders($data);
 
                 continue;
             }
@@ -199,7 +291,7 @@ final class StaffImportService
             return [];
         }
 
-        $headers = array_map(fn ($h) => Str::slug((string) $h, '_'), array_shift($sheet));
+        $headers = $this->normalizeHeaders(array_shift($sheet));
         $rows = [];
 
         foreach ($sheet as $data) {
@@ -217,38 +309,168 @@ final class StaffImportService
     }
 
     /**
-     * @param  array<string, string|null>  $row
-     * @return array<string, string|null>
+     * @param  array<int, mixed>  $headers
+     * @return list<string>
      */
-    private function mapRow(array $row): array
+    private function normalizeHeaders(array $headers): array
+    {
+        return array_map(function ($h) {
+            // Strip a UTF-8 BOM (Excel/Sheets CSV exports) before slugging.
+            $h = preg_replace('/^\xEF\xBB\xBF/', '', (string) $h);
+
+            return Str::slug(str_replace('/', ' ', (string) $h), '_');
+        }, $headers);
+    }
+
+    /**
+     * @param  array<string, string|null>  $row
+     * @param  list<string>  $errors
+     * @return array<string, mixed>
+     */
+    private function mapRow(array $row, array &$errors, int $line): array
     {
         $get = function (array $aliases) use ($row): ?string {
             foreach ($aliases as $alias) {
-                if (array_key_exists($alias, $row) && $row[$alias] !== null && $row[$alias] !== '') {
-                    return $row[$alias];
+                $value = $row[$alias] ?? null;
+                if ($value === null) {
+                    continue;
                 }
+                $value = trim($value);
+                if ($value === '' || in_array(strtolower($value), self::EMPTY_VALUES, true)) {
+                    continue;
+                }
+
+                return $value;
             }
 
             return null;
         };
 
-        return [
-            'name' => $get(['name', 'full_name', 'staff_name']),
-            'email' => strtolower((string) ($get(['email', 'email_address']) ?? '')),
+        $date = function (array $aliases, string $label) use ($get, &$errors, $line): ?string {
+            $raw = $get($aliases);
+            if ($raw === null) {
+                return null;
+            }
+            $parsed = $this->parseDate($raw);
+            if ($parsed === null) {
+                $errors[] = "Row {$line}: {$label} \"{$raw}\" is not a recognised date.";
+            }
+
+            return $parsed?->toDateString();
+        };
+
+        $isForm = array_intersect(self::FORM_MARKERS, array_keys($row)) !== [];
+
+        $personalEmail = $get(['personal_email_address', 'personal_email']);
+        $workEmail = $get(['email', 'email_address', 'work_email_address', 'work_email']);
+        $loginEmail = $workEmail;
+        if ($isForm && ($loginEmail === null || ! filter_var($loginEmail, FILTER_VALIDATE_EMAIL))) {
+            $loginEmail = $personalEmail; // form allows "N/A" for work email
+        }
+
+        $submitted = $get(['timestamp']);
+
+        $mapped = [
+            'source' => $isForm ? 'form' : 'directory',
+            'name' => ($n = $get(['name', 'full_name', 'staff_name'])) !== null ? rtrim($n, " ,") : null,
+            'email' => strtolower((string) ($loginEmail ?? '')),
             'department' => $get(['department', 'dept']),
             'team' => $get(['team', 'sub_team']),
             'job_title' => $get(['job_title', 'title', 'role_title']),
-            'role' => $get(['role', 'access_role']) ?: 'Staff',
-            'phone' => $get(['phone', 'mobile']),
+            'role' => $get(['role', 'access_role']),
+            'phone' => $get(['phone', 'phone_number', 'mobile']),
             'extension' => $get(['extension', 'ext']),
             'location' => $get(['location', 'office']),
             'expertise' => $get(['expertise', 'skills']),
-            'start_date' => $get(['start_date', 'started_at']),
+            'start_date' => $date(['start_date', 'started_at'], 'start date'),
+        ];
+
+        if (! $isForm) {
+            return $mapped;
+        }
+
+        return $mapped + [
+            'submitted_at' => $submitted !== null ? $this->parseDate($submitted)?->toDateTimeString() : null,
+            'preferred_name' => $get(['preferred_name']),
+            'personal_email' => $personalEmail !== null ? strtolower($personalEmail) : null,
+            'gender' => $this->normalizeGender($get(['gender'])),
+            'nationality' => $get(['nationality']),
+            'date_of_birth' => $date(['date_of_birth', 'dob'], 'date of birth'),
+            'residential_address' => $get(['residential_address', 'address']),
+            'nok_full_name' => $get(['next_of_kin_full_name']),
+            'nok_phone' => $get(['next_of_kin_phone_number']),
+            'nok_address' => $get(['next_of_kin_address']),
+            'nok_relationship' => $get(['relationship_to_next_of_kin']),
+            'contract_type' => $this->normalizeContractType($get(['contract_type'])),
+            'role_responsibilities' => $get(['describe_your_role_and_responsibilities', 'role_and_responsibilities']),
+            'work_email' => $workEmail !== null && filter_var($workEmail, FILTER_VALIDATE_EMAIL) ? strtolower($workEmail) : null,
+            'company_phone' => $get(['company_phone_number', 'company_phone']),
+            'linkedin_url' => $get(['linkedin_profile_url', 'linkedin_url', 'linkedin']),
+            'photo_drive_url' => $this->safeUrl($get(['employee_photo', 'photo'])),
+            'cv_drive_url' => $this->safeUrl($get(['cv_resume', 'cv'])),
+            'dbs_check' => $get(['dbs_check', 'dbs']),
+            'bank_name' => $get(['bank_name']),
+            'account_name' => $get(['account_name']),
+            'account_number' => $get(['account_number']),
+            'sort_code' => $get(['sort_code_for_those_in_the_uk', 'sort_code']),
         ];
     }
 
+    private function parseDate(string $value): ?CarbonImmutable
+    {
+        if (is_numeric($value) && class_exists(\PhpOffice\PhpSpreadsheet\Shared\Date::class)) {
+            return CarbonImmutable::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $value));
+        }
+
+        // ISO first, then Google Forms' default US format (month/day/year).
+        $formats = ['Y-m-d', 'Y-m-d H:i:s', 'n/j/Y', 'n/j/Y G:i:s', 'n/j/Y G:i', 'm/d/Y', 'm/d/Y H:i:s'];
+        foreach ($formats as $format) {
+            try {
+                $parsed = CarbonImmutable::createFromFormat('!'.$format, $value);
+            } catch (\Throwable) {
+                continue;
+            }
+            if ($parsed && $parsed->format($format) === $value) {
+                return $parsed;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeGender(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $key = Str::slug($value, '_');
+
+        return array_key_exists($key, StaffInformation::GENDERS) ? $key : $value;
+    }
+
+    private function normalizeContractType(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $key = Str::slug($value, '_');
+        $key = match ($key) {
+            'fulltime', 'full' => 'full_time',
+            'parttime', 'part' => 'part_time',
+            'intern' => 'internship',
+            default => $key,
+        };
+
+        return array_key_exists($key, StaffInformation::CONTRACT_TYPES) ? $key : $value;
+    }
+
+    private function safeUrl(?string $value): ?string
+    {
+        return $value !== null && preg_match('#^https?://#i', $value) ? $value : null;
+    }
+
     /**
-     * @param  array<string, string|null>  $row
+     * @param  array<string, mixed>  $row
      * @return list<string>
      */
     private function validateRow(array $row, int $line): array
@@ -259,9 +481,11 @@ final class StaffImportService
             $errors[] = "Row {$line}: name is required.";
         }
         if (blank($row['email']) || ! filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "Row {$line}: a valid email is required.";
+            $errors[] = $row['source'] === 'form'
+                ? "Row {$line}: needs a valid work or personal email."
+                : "Row {$line}: a valid email is required.";
         }
-        if (blank($row['department'])) {
+        if ($row['source'] !== 'form' && blank($row['department'])) {
             $errors[] = "Row {$line}: department is required.";
         }
         if ($row['role'] && ! in_array($row['role'], ['Admin', 'Manager', 'Staff', 'Guest'], true)) {
