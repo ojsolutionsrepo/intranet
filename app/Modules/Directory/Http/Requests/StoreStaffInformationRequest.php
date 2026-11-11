@@ -31,6 +31,23 @@ class StoreStaffInformationRequest extends FormRequest
         return $record->actorCanEdit($actor);
     }
 
+    private function subject(): User
+    {
+        $subject = $this->route('user');
+
+        return $subject instanceof User ? $subject : $this->user();
+    }
+
+    /**
+     * Store staff emails in lower case so uniqueness is case-insensitive.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('work_email'))) {
+            $this->merge(['work_email' => strtolower(trim($this->input('work_email')))]);
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -55,7 +72,13 @@ class StoreStaffInformationRequest extends FormRequest
             'contract_type' => ['required', Rule::in(array_keys(StaffInformation::CONTRACT_TYPES))],
             'start_date' => ['required', 'date'],
             'role_responsibilities' => ['nullable', 'string', 'max:5000'],
-            'work_email' => ['required', 'email', 'max:255'],
+            // Staff email is the unique identifier for a person: no other staff record
+            // or login account may already use it.
+            'work_email' => [
+                'required', 'email', 'max:255',
+                Rule::unique('staff_information', 'work_email')->ignore($this->subject()->id, 'user_id'),
+                Rule::unique('users', 'email')->ignore($this->subject()->id),
+            ],
             'company_phone' => ['nullable', 'string', 'max:40'],
             'linkedin_url' => ['nullable', 'url', 'max:500'],
 
@@ -90,7 +113,7 @@ class StoreStaffInformationRequest extends FormRequest
             'contract_type' => 'contract type',
             'start_date' => 'start date',
             'role_responsibilities' => 'role and responsibilities',
-            'work_email' => 'work email address',
+            'work_email' => 'staff (work) email',
             'company_phone' => 'company phone number',
             'linkedin_url' => 'LinkedIn profile URL',
             'photo' => 'employee photo',

@@ -16,12 +16,16 @@ return new class extends Migration
             // Uploaded DBS certificate: stored on the private "local" disk, never public.
             $table->string('dbs_path')->nullable()->after('dbs_check');
             $table->string('dbs_original_name')->nullable()->after('dbs_path');
+
+            // Staff (work) email is the unique identifier for a person.
+            $table->unique('work_email');
         });
     }
 
     public function down(): void
     {
         Schema::table('staff_information', function (Blueprint $table) {
+            $table->dropUnique(['work_email']);
             $table->dropColumn(['photo_drive_url', 'cv_drive_url', 'dbs_check', 'dbs_path', 'dbs_original_name']);
         });
     }

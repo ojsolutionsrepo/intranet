@@ -88,6 +88,13 @@ final class StaffImportService
                     ? User::query()->find((int) $target)
                     : $this->findUser($row); // 'new', but never duplicate an email that already exists
 
+                // Staff email is unique: don't give it to a second person via a manual mapping.
+                if ($existing && $this->staffEmailOwnedByOther($row['email'], $existing->id)) {
+                    $skipped++;
+
+                    continue;
+                }
+
                 if ($existing) {
                     // The existing account is authoritative: keep its login email and display name.
                     $user = $existing;
@@ -169,86 +176,45 @@ final class StaffImportService
         return compact('created', 'updated', 'skipped');
     }
 
+    private function staffEmailOwnedByOther(string $email, int $userId): bool
+    {
+        $email = strtolower($email);
+
+        return User::query()->whereRaw('LOWER(email) = ?', [$email])->where('id', '!=', $userId)->exists()
+            || StaffInformation::query()->whereRaw('LOWER(work_email) = ?', [$email])->where('user_id', '!=', $userId)->exists();
+    }
+
     /**
+     * The staff (work) email is the unique identifier for a person.
+     *
      * @param  array<string, mixed>  $row
      */
     private function findUser(array $row): ?User
     {
-        foreach (array_filter([$row['email'], $row['personal_email'] ?? null]) as $email) {
-            $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower((string) $email)])->first();
-            if ($user) {
-                return $user;
-            }
-        }
+        $id = $this->matchExistingUser($row)[0];
 
-        return null;
+        return $id ? User::query()->find($id) : null;
     }
 
     /**
-     * Best guess at which existing account a row belongs to.
-     * Order: login email → staff information emails → unambiguous name match.
+     * Which existing account a row belongs to, using the staff email only:
+     * the account's login email, or the work email on its staff information.
+     * Admins can still pick a different account (or skip) in the preview.
      *
      * @param  array<string, mixed>  $row
      * @return array{0: int|null, 1: string|null}
      */
     public function matchExistingUser(array $row): array
     {
-        if ($user = $this->findUser($row)) {
-            return [$user->id, 'email'];
-        }
-
-        $emails = array_values(array_filter([$row['email'] ?? null, $row['work_email'] ?? null, $row['personal_email'] ?? null]));
-        if ($emails !== []) {
-            $userId = StaffInformation::query()
-                ->where(function ($q) use ($emails) {
-                    foreach ($emails as $email) {
-                        $q->orWhereRaw('LOWER(work_email) = ?', [strtolower($email)])
-                            ->orWhereRaw('LOWER(personal_email) = ?', [strtolower($email)]);
-                    }
-                })
-                ->value('user_id');
-            if ($userId) {
-                return [(int) $userId, 'email'];
-            }
-        }
-
-        $tokens = $this->nameTokens((string) ($row['name'] ?? ''));
-        if (count($tokens) < 2) {
+        $email = strtolower(trim((string) ($row['email'] ?? '')));
+        if ($email === '') {
             return [null, null];
         }
 
-        $candidates = User::query()
-            ->with('staffInformation:id,user_id,full_name')
-            ->get(['id', 'name'])
-            ->filter(function (User $user) use ($tokens) {
-                foreach (array_filter([$user->name, $user->staffInformation?->full_name]) as $name) {
-                    $theirs = $this->nameTokens($name);
-                    if (count($theirs) < 2) {
-                        continue;
-                    }
-                    // e.g. "Victor Cobham" matches "Victor Cobham Nsa", in any word order.
-                    $shorter = count($theirs) <= count($tokens) ? $theirs : $tokens;
-                    $longer = $shorter === $theirs ? $tokens : $theirs;
-                    if (array_diff($shorter, $longer) === []) {
-                        return true;
-                    }
-                }
+        $userId = User::query()->whereRaw('LOWER(email) = ?', [$email])->value('id')
+            ?? StaffInformation::query()->whereRaw('LOWER(work_email) = ?', [$email])->value('user_id');
 
-                return false;
-            });
-
-        return $candidates->count() === 1 ? [$candidates->first()->id, 'name'] : [null, null];
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function nameTokens(string $name): array
-    {
-        $clean = Str::lower(Str::ascii($name));
-        $parts = preg_split('/[^a-z]+/', $clean, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-
-        return array_values(array_unique(array_filter($parts, fn ($p) => strlen($p) > 1)));
+        return $userId ? [(int) $userId, 'staff email'] : [null, null];
     }
 
     /**
@@ -436,11 +402,9 @@ final class StaffImportService
         $isForm = array_intersect(self::FORM_MARKERS, array_keys($row)) !== [];
 
         $personalEmail = $get(['personal_email_address', 'personal_email']);
+        // The staff (work) email is the unique identifier — no fallback to personal email.
         $workEmail = $get(['email', 'email_address', 'work_email_address', 'work_email']);
         $loginEmail = $workEmail;
-        if ($isForm && ($loginEmail === null || ! filter_var($loginEmail, FILTER_VALIDATE_EMAIL))) {
-            $loginEmail = $personalEmail; // form allows "N/A" for work email
-        }
 
         $submitted = $get(['timestamp']);
 
@@ -556,7 +520,7 @@ final class StaffImportService
         }
         if (blank($row['email']) || ! filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = $row['source'] === 'form'
-                ? "Row {$line}: needs a valid work or personal email."
+                ? "Row {$line}: needs a valid staff (work) email. It is the unique identifier for each person."
                 : "Row {$line}: a valid email is required.";
         }
         if ($row['source'] !== 'form' && blank($row['department'])) {

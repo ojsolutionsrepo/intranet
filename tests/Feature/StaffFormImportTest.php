@@ -76,7 +76,7 @@ it('imports Google Form responses into users and staff information', function ()
         ->and($info->cv_drive_url)->toBe('https://drive.google.com/open?id=cv123');
 });
 
-it('falls back to personal email, keeps existing roles, and lets the latest response win', function () {
+it('requires a staff email, keeps existing roles, and lets the latest response win', function () {
     $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
     $adminRoles = $admin->getRoleNames()->all();
 
@@ -88,37 +88,70 @@ it('falls back to personal email, keeps existing roles, and lets the latest resp
         formRow([1 => 'Bad Date', 17 => 'baddate@oj.local', 7 => 'sometime']),
     ]));
 
-    expect(collect($preview['rows'])->where('_valid', false)->count())->toBe(1);
+    // No staff email ("N/A") and a bad date are both rejected; personal email is not a fallback.
+    expect(collect($preview['rows'])->where('_valid', false)->count())->toBe(2)
+        ->and(collect($preview['errors'])->pluck('message')->implode(' '))->toContain('staff (work) email');
     $importer->commit($preview['rows']);
 
     $admin->refresh();
     expect($admin->getRoleNames()->all())->toBe($adminRoles)
         ->and($admin->staffInformation->job_title)->toBe('New title')
-        ->and(User::query()->where('email', 'nowork@example.com')->exists())->toBeTrue()
+        ->and(User::query()->where('email', 'nowork@example.com')->exists())->toBeFalse()
         ->and(User::query()->where('email', 'baddate@oj.local')->exists())->toBeFalse();
 });
 
-it('maps form rows onto existing accounts by name when the email differs', function () {
+it('matches existing accounts by staff email only', function () {
     $existing = User::factory()->create(['name' => 'Victor Cobham', 'email' => 'victor@oj.local']);
+    $sameName = User::factory()->create(['name' => 'Same Name', 'email' => 'same.name@oj.local']);
     $usersBefore = User::query()->count();
 
     $importer = app(StaffImportService::class);
     $preview = $importer->preview(formCsv([
-        formRow([1 => 'Victor Cobham Nsa', 17 => 'cobham.other@example.com', 4 => 'victor.personal@example.com']),
+        // Staff email matches the login email, even though the name differs.
+        formRow([1 => 'Victor Cobham Nsa', 17 => 'VICTOR@oj.local']),
+        // Same name but a different staff email: not matched by name.
+        formRow([1 => 'Same Name', 17 => 'someone.new@oj.local', 4 => 'same.name@oj.local']),
     ]));
 
     expect($preview['rows'][0]['match_user_id'])->toBe($existing->id)
-        ->and($preview['rows'][0]['match_reason'])->toBe('name');
+        ->and($preview['rows'][0]['match_reason'])->toBe('staff email')
+        ->and($preview['rows'][1]['match_user_id'])->toBeNull();
 
     $stats = $importer->commit($preview['rows']);
 
     $existing->refresh();
-    expect($stats)->toMatchArray(['created' => 0, 'updated' => 1])
-        ->and(User::query()->count())->toBe($usersBefore)
-        ->and($existing->email)->toBe('victor@oj.local')
+    expect($stats)->toMatchArray(['created' => 1, 'updated' => 1])
+        ->and(User::query()->count())->toBe($usersBefore + 1)
         ->and($existing->name)->toBe('Victor Cobham')
         ->and($existing->staffInformation->full_name)->toBe('Victor Cobham Nsa')
-        ->and($existing->staffInformation->work_email)->toBe('cobham.other@example.com');
+        ->and($sameName->fresh()->staffInformation)->toBeNull();
+
+    // Re-importing finds people by the staff email stored on their staff information too.
+    $existing->update(['email' => 'victor.login@oj.local']);
+    $again = $importer->preview(formCsv([formRow([17 => 'victor@oj.local'])]));
+    expect($again['rows'][0]['match_user_id'])->toBe($existing->id);
+});
+
+it('never gives one staff email to two people', function () {
+    $owner = User::factory()->create(['email' => 'owner@oj.local']);
+    $other = User::factory()->create(['email' => 'other@oj.local']);
+
+    $importer = app(StaffImportService::class);
+    $preview = $importer->preview(formCsv([formRow([17 => 'owner@oj.local'])]));
+    $stats = $importer->commit($preview['rows'], [0 => $other->id]);
+
+    expect($stats['skipped'])->toBe(1)
+        ->and($other->fresh()->staffInformation)->toBeNull();
+
+    // The staff information form enforces it as well.
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+    actingAs($admin)
+        ->post(route('admin.users.staff-information.update', $other), [
+            'full_name' => 'Other', 'phone_number' => '1', 'personal_email' => 'p@example.com',
+            'job_title' => 'X', 'contract_type' => 'full_time', 'start_date' => '2024-01-01',
+            'work_email' => 'OWNER@oj.local',
+        ])
+        ->assertSessionHasErrors('work_email');
 });
 
 it('uploads, previews without leaking bank details, and commits through the import page', function () {
