@@ -95,6 +95,10 @@ class AdminServiceProvider extends ServiceProvider
                     ->name('admin.users.staff-information.cv')
                     ->middleware('can:admin.users.manage');
 
+                Route::get('/users/{user}/staff-information/dbs', [StaffInformationController::class, 'downloadDbs'])
+                    ->name('admin.users.staff-information.dbs')
+                    ->middleware('can:admin.users.manage');
+
                 Route::get('/departments', [DepartmentAdminController::class, 'index'])
                     ->name('admin.departments')
                     ->middleware('can:admin.departments.manage');

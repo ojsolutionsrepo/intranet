@@ -61,6 +61,7 @@ class StoreStaffInformationRequest extends FormRequest
 
             'photo' => ['nullable', 'file', 'max:5120', 'extensions:jpg,jpeg,png,webp'],
             'cv' => ['nullable', 'file', 'max:10240', 'extensions:pdf,doc,docx'],
+            'dbs' => ['nullable', 'file', 'max:10240', 'extensions:pdf,jpg,jpeg,png'],
 
             'bank_name' => ['nullable', 'string', 'max:160'],
             'account_name' => ['nullable', 'string', 'max:200'],
@@ -94,6 +95,7 @@ class StoreStaffInformationRequest extends FormRequest
             'linkedin_url' => 'LinkedIn profile URL',
             'photo' => 'employee photo',
             'cv' => 'CV / resume',
+            'dbs' => 'DBS certificate',
             'bank_name' => 'bank name',
             'account_name' => 'account name',
             'account_number' => 'account number',

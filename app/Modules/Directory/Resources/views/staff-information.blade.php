@@ -192,7 +192,7 @@
             </section>
 
             <section class="card p-5 space-y-4">
-                <h2 class="font-display font-semibold text-lg">Photo &amp; CV</h2>
+                <h2 class="font-display font-semibold text-lg">Photo, CV &amp; DBS</h2>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)] mb-1" for="photo">Employee photo</label>
@@ -217,6 +217,18 @@
                             </p>
                         @endif
                         @error('cv') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)] mb-1" for="dbs">DBS check certificate</label>
+                        <input id="dbs" type="file" name="dbs" class="input" accept=".pdf,.jpg,.jpeg,.png">
+                        <p class="note text-xs mt-1">If you have one · PDF, JPG or PNG · max 10&nbsp;MB · only you and HR admins can view it</p>
+                        @if ($record->dbs_path)
+                            <p class="mt-2 text-sm">
+                                On file:
+                                <a href="{{ $dbsDownloadUrl }}" class="underline">{{ $record->dbs_original_name ?: 'Download DBS certificate' }}</a>
+                            </p>
+                        @endif
+                        @error('dbs') <p class="text-[var(--err-600)] text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
                 @if ($record->photo_drive_url || $record->cv_drive_url || $record->dbs_check)

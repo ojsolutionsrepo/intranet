@@ -41,12 +41,12 @@ final class StaffInformationService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function save(User $subject, User $actor, array $data, ?UploadedFile $photo = null, ?UploadedFile $cv = null): StaffInformation
+    public function save(User $subject, User $actor, array $data, ?UploadedFile $photo = null, ?UploadedFile $cv = null, ?UploadedFile $dbs = null): StaffInformation
     {
         $record = $this->forUser($subject);
         abort_unless($record->actorCanEdit($actor), 403, 'Staff information is locked for editing.');
 
-        return DB::transaction(function () use ($subject, $actor, $data, $photo, $cv, $record) {
+        return DB::transaction(function () use ($subject, $actor, $data, $photo, $cv, $dbs, $record) {
             $persisted = StaffInformation::query()->firstOrNew(['user_id' => $subject->id]);
             if (! $persisted->exists) {
                 $persisted->staff_can_edit = true;
@@ -93,6 +93,11 @@ final class StaffInformationService
                 $persisted->cv_original_name = $cv->getClientOriginalName();
             }
 
+            if ($dbs) {
+                $persisted->dbs_path = $this->storeDbs($subject, $dbs, $persisted->dbs_path);
+                $persisted->dbs_original_name = $dbs->getClientOriginalName();
+            }
+
             $persisted->save();
 
             $profile = $subject->profile()->firstOrCreate(['user_id' => $subject->id]);
@@ -111,6 +116,7 @@ final class StaffInformationService
                 'contract_type' => $persisted->contract_type,
                 'has_photo' => filled($persisted->photo_path),
                 'has_cv' => filled($persisted->cv_path),
+                'has_dbs' => filled($persisted->dbs_path),
                 'edited_by' => $actor->id,
                 'admin_edit' => $actor->id !== $subject->id,
             ]);
@@ -155,6 +161,27 @@ final class StaffInformationService
 
         if ($previous && $previous !== $path) {
             Storage::disk('public')->delete($previous);
+        }
+
+        return $path;
+    }
+
+    /**
+     * DBS certificates are criminal-records data: keep them on the private
+     * "local" disk and only serve them through the authorised download route.
+     */
+    private function storeDbs(User $user, UploadedFile $file, ?string $previous): string
+    {
+        $dir = 'staff-information/'.$user->id;
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'pdf');
+        $path = $file->storeAs($dir, 'dbs-'.Str::uuid().'.'.$ext, 'local');
+
+        if (! is_string($path) || $path === '') {
+            throw new \RuntimeException('Could not store DBS certificate.');
+        }
+
+        if ($previous && $previous !== $path) {
+            Storage::disk('local')->delete($previous);
         }
 
         return $path;

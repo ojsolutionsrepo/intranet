@@ -123,6 +123,31 @@ class StaffInformationController extends Controller
         );
     }
 
+    public function downloadDbs(ModuleRegistry $registry, StaffInformationService $service, ?User $user = null): StreamedResponse
+    {
+        abort_unless($registry->isEnabled('directory'), 404);
+
+        $actor = Auth::user();
+        abort_unless($actor instanceof User, 403);
+
+        $subject = $user ?? $actor;
+        if ($subject->id !== $actor->id) {
+            abort_unless(StaffInformation::actorCanManage($actor), 403);
+        }
+
+        $record = $service->forUser($subject);
+        abort_unless(filled($record->dbs_path), 404);
+
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($record->dbs_path), 404);
+
+        return $disk->download(
+            $record->dbs_path,
+            $record->dbs_original_name ?: 'dbs-certificate.pdf',
+        );
+    }
+
     private function renderForm(StaffInformationService $service, User $subject, User $actor, bool $adminMode): View
     {
         $record = $service->forUser($subject);
@@ -142,6 +167,9 @@ class StaffInformationController extends Controller
             'cvDownloadUrl' => $adminMode
                 ? route('admin.users.staff-information.cv', $subject)
                 : route('directory.staff-information.cv'),
+            'dbsDownloadUrl' => $adminMode
+                ? route('admin.users.staff-information.dbs', $subject)
+                : route('directory.staff-information.dbs'),
         ]);
     }
 
@@ -159,6 +187,7 @@ class StaffInformationController extends Controller
                 $request->validated(),
                 $request->file('photo'),
                 $request->file('cv'),
+                $request->file('dbs'),
             );
         } catch (\Throwable $e) {
             return back()

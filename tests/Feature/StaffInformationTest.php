@@ -160,3 +160,38 @@ it('lets admins edit staff information and lock staff editing', function () {
         ])
         ->assertRedirect(route('directory.staff-information.edit'));
 });
+
+it('stores DBS certificates privately and only lets the owner or an admin download them', function () {
+    Storage::fake('local');
+    $staff = User::query()->where('email', 'staff@oj.local')->firstOrFail();
+    $admin = User::query()->where('email', 'admin@oj.local')->firstOrFail();
+    $manager = User::query()->where('email', 'manager@oj.local')->firstOrFail();
+
+    actingAs($staff)
+        ->get(route('directory.staff-information.edit'))
+        ->assertSee('DBS check certificate');
+
+    actingAs($staff)
+        ->post(route('directory.staff-information.update'), [
+            'full_name' => 'Staff User',
+            'phone_number' => '+44 7700 900123',
+            'personal_email' => 'staff.personal@example.com',
+            'job_title' => 'Developer',
+            'contract_type' => 'full_time',
+            'start_date' => '2024-01-15',
+            'work_email' => 'staff@oj.local',
+            'dbs' => UploadedFile::fake()->create('dbs.pdf', 80, 'application/pdf'),
+        ])
+        ->assertRedirect(route('directory.staff-information.edit'));
+
+    $record = StaffInformation::query()->where('user_id', $staff->id)->firstOrFail();
+
+    expect($record->dbs_original_name)->toBe('dbs.pdf')
+        ->and(Storage::disk('local')->exists($record->dbs_path))->toBeTrue()
+        ->and(Storage::disk('public')->exists($record->dbs_path))->toBeFalse();
+
+    actingAs($staff)->get(route('directory.staff-information.dbs'))->assertOk();
+    actingAs($admin)->get(route('admin.users.staff-information.dbs', $staff))->assertOk();
+
+    actingAs($manager)->get(route('admin.users.staff-information.dbs', $staff))->assertForbidden();
+});

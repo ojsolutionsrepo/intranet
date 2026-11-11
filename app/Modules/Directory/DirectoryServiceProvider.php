@@ -77,6 +77,10 @@ class DirectoryServiceProvider extends ServiceProvider
                     ->name('directory.staff-information.cv')
                     ->middleware('can:directory.view');
 
+                Route::get('/staff-information/dbs', [StaffInformationController::class, 'downloadDbs'])
+                    ->name('directory.staff-information.dbs')
+                    ->middleware('can:directory.view');
+
                 Route::middleware('can:directory.import')->group(function () {
                     Route::get('/import', [ImportController::class, 'index'])->name('directory.import');
                 });

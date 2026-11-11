@@ -54,6 +54,8 @@ class StaffInformation extends Model
         'cv_original_name',
         'cv_drive_url',
         'dbs_check',
+        'dbs_path',
+        'dbs_original_name',
         'bank_name',
         'account_name',
         'account_number',
